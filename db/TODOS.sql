@@ -11,3 +11,15 @@ CREATE TABLE todos (
     due DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+CREATE TABLE lessons (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    subject VARCHAR(100),
+    teacher VARCHAR(100),
+    room VARCHAR(50),
+    weekday INT,       -- 1=Montag … 5=Freitag
+    start_time TIME,
+    end_time TIME,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
