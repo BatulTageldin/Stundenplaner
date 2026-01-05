@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Mein Stundenplan</h2>
+
+{% if lessons %}
+  <ul class="list-group">
+    {% for lesson in lessons %}
+      <li class="list-group-item">
+        <strong>{{ lesson.subject }}</strong><br>
+        {{ lesson.teacher }} – Raum {{ lesson.room }}<br>
+        Tag {{ lesson.weekday }},
+        {{ lesson.start_time }}–{{ lesson.end_time }}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>Noch keine Lektionen vorhanden.</p>
+{% endif %}
+
+{% endblock %}
