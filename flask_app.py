@@ -74,6 +74,15 @@ def login():
         footer_link_label="Registrieren"
     )
 
+@app.route("/week")
+@login_required
+def week_view():
+    lessons = db_read(
+        "SELECT * FROM lessons WHERE user_id=%s ORDER BY weekday, start_time",
+        (current_user.id,)
+    )
+    return render_template("week.html", lessons=lessons)
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
