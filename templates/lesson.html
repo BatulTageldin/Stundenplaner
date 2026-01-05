@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Fach / Lektion hinzufügen</h2>
+
+<form method="POST">
+
+  <div class="form-group">
+    <label>Fach</label>
+    <input type="text" name="subject" class="form-control" required>
+  </div>
+
+  <div class="form-group">
+    <label>Lehrperson</label>
+    <input type="text" name="teacher" class="form-control"
+           placeholder="z. B. Frau Müller">
+  </div>
+
+  <div class="form-group">
+    <label>Zimmer</label>
+    <input type="text" name="room" class="form-control"
+           placeholder="z. B. B204">
+  </div>
+
+  <div class="form-group">
+    <label>Wochentag</label>
+    <select name="weekday" class="form-control">
+      <option value="1">Montag</option>
+      <option value="2">Dienstag</option>
+      <option value="3">Mittwoch</option>
+      <option value="4">Donnerstag</option>
+      <option value="5">Freitag</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Startzeit</label>
+    <input type="time" name="start" class="form-control" required>
+  </div>
+
+  <div class="form-group">
+    <label>Endzeit</label>
+    <input type="time" name="end" class="form-control" required>
+  </div>
+
+  <button type="submit" class="btn btn-primary">
+    Speichern
+  </button>
+
+</form>
+{% endblock %}
