@@ -106,7 +106,25 @@ def logout():
     logout_user()
     return redirect(url_for("index"))
 
+@app.route("/lesson/add", methods=["GET", "POST"])
+@login_required
+def add_lesson():
+    if request.method == "POST":
+        subject = request.form["subject"]
+        teacher = request.form.get("teacher", "unbekannt")
+        room = request.form.get("room", "unbekannt")
+        weekday = request.form["weekday"]
+        start = request.form["start"]
+        end = request.form["end"]
 
+        db_write("""
+            INSERT INTO lessons (user_id, subject, teacher, room, weekday, start_time, end_time)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
+        """, (current_user.id, subject, teacher, room, weekday, start, end))
+
+        return redirect(url_for("week_view"))
+
+    return render_template("lesson_add.html")
 
 # App routes
 @app.route("/", methods=["GET", "POST"])
