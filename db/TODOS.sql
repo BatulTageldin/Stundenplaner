@@ -14,12 +14,18 @@ CREATE TABLE todos (
 
 CREATE TABLE lessons (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
     subject VARCHAR(100),
     teacher VARCHAR(100),
     room VARCHAR(50),
     weekday INT,       -- 1=Montag … 5=Freitag
     start_time TIME,
-    end_time TIME,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    end_time TIME
+);
+
+CREATE TABLE schedule (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    lesson_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id)
 );
