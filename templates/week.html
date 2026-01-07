@@ -1,21 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Mein Stundenplan</h2>
+<h2>Dein Stundenplan</h2>
 
-{% if lessons %}
-  <ul class="list-group">
-    {% for lesson in lessons %}
-      <li class="list-group-item">
-        <strong>{{ lesson.subject }}</strong><br>
-        {{ lesson.teacher }} – Raum {{ lesson.room }}<br>
-        Tag {{ lesson.weekday }},
-        {{ lesson.start_time }}–{{ lesson.end_time }}
-      </li>
+<style>
+  .lesson-card {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+  }
+  .weekday-title {
+    margin-top: 30px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+</style>
+
+{% for tag, eintraege in stundenplan.items() %}
+  <h3 class="weekday-title">{{ tag }}</h3>
+
+  {% if eintraege %}
+    {% for e in eintraege %}
+      <div class="lesson-card">
+        <strong>{{ e.fachname }}</strong><br>
+        Lehrer: {{ e.lehrer }}<br>
+        Raum: {{ e.raum }}<br>
+        Zeit: {{ e.startzeit }} – {{ e.endzeit }}
+      </div>
     {% endfor %}
-  </ul>
-{% else %}
-  <p>Noch keine Lektionen vorhanden.</p>
-{% endif %}
+  {% else %}
+    <p>Keine Lektionen</p>
+  {% endif %}
+{% endfor %}
 
 {% endblock %}
+

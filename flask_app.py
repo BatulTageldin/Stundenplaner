@@ -44,9 +44,22 @@ def webhook():
         origin = repo.remotes.origin
         origin.pull()
         return 'Updated PythonAnywhere successfully', 200
-    return 'Unathorized', 401
+    return 'Unauthorized', 401
 
-# Auth routes
+
+# -----------------------------
+# STARTSEITE
+# -----------------------------
+@app.route("/")
+def index():
+    if current_user.is_authenticated:
+        return redirect(url_for("week_view"))
+    return redirect(url_for("login"))
+
+
+# -----------------------------
+# LOGIN
+# -----------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
@@ -59,7 +72,7 @@ def login():
 
         if user:
             login_user(user)
-            return redirect(url_for("index"))
+            return redirect(url_for("week_view"))
 
         error = "Benutzername oder Passwort ist falsch."
 
@@ -74,16 +87,10 @@ def login():
         footer_link_label="Registrieren"
     )
 
-@app.route("/week")
-@login_required
-def week_view():
-    lessons = db_read(
-        "SELECT * FROM lessons WHERE user_id=%s ORDER BY weekday, start_time",
-        (current_user.id,)
-    )
-    return render_template("week.html", lessons=lessons)
 
-
+# -----------------------------
+# REGISTER
+# -----------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     error = None
@@ -109,53 +116,137 @@ def register():
         footer_link_label="Einloggen"
     )
 
+
+# -----------------------------
+# LOGOUT
+# -----------------------------
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("index"))
+    return redirect(url_for("login"))
 
+
+# -----------------------------
+# FACH HINZUFÜGEN
+# -----------------------------
 @app.route("/lesson/add", methods=["GET", "POST"])
 @login_required
 def add_lesson():
     if request.method == "POST":
         subject = request.form["subject"]
-        teacher = request.form.get("teacher", "unbekannt")
-        room = request.form.get("room", "unbekannt")
+        teacher_name = request.form.get("teacher", "unbekannt")
+        room_number = request.form.get("room", "unbekannt")
         weekday = request.form["weekday"]
         start = request.form["start"]
         end = request.form["end"]
 
-        db_write("""
-            INSERT INTO lessons (user_id, subject, teacher, room, weekday, start_time, end_time)
-            VALUES (%s,%s,%s,%s,%s,%s,%s)
-        """, (current_user.id, subject, teacher, room, weekday, start, end))
+        # Wochentag von Zahl → Text
+        tage = {
+            "1": "Montag",
+            "2": "Dienstag",
+            "3": "Mittwoch",
+            "4": "Donnerstag",
+            "5": "Freitag"
+        }
+        tag = tage[weekday]
+
+        # Lehrer speichern oder finden
+        lehrer = db_read(
+            "SELECT id FROM lehrer WHERE name=%s",
+            (teacher_name,),
+            single=True
+        )
+        if not lehrer:
+            db_write("INSERT INTO lehrer (name) VALUES (%s)", (teacher_name,))
+            lehrer = db_read(
+                "SELECT id FROM lehrer WHERE name=%s",
+                (teacher_name,),
+                single=True
+            )
+
+        # Raum speichern oder finden
+        raum = db_read(
+            "SELECT id FROM raum WHERE raumnummer=%s",
+            (room_number,),
+            single=True
+        )
+        if not raum:
+            db_write("INSERT INTO raum (raumnummer) VALUES (%s)", (room_number,))
+            raum = db_read(
+                "SELECT id FROM raum WHERE raumnummer=%s",
+                (room_number,),
+                single=True
+            )
+
+        # Fach speichern oder finden
+        fach = db_read(
+            "SELECT id FROM faecher WHERE fachname=%s AND lehrer_id=%s AND raum_id=%s",
+            (subject, lehrer["id"], raum["id"]),
+            single=True
+        )
+        if not fach:
+            db_write(
+                "INSERT INTO faecher (fachname, lehrer_id, raum_id) VALUES (%s,%s,%s)",
+                (subject, lehrer["id"], raum["id"])
+            )
+            fach = db_read(
+                "SELECT id FROM faecher WHERE fachname=%s AND lehrer_id=%s AND raum_id=%s",
+                (subject, lehrer["id"], raum["id"]),
+                single=True
+            )
+
+        # Stundenplan-Eintrag speichern
+        db_write(
+            "INSERT INTO stundenplan (user_id, fach_id, tag, startzeit, endzeit) VALUES (%s,%s,%s,%s,%s)",
+            (current_user.id, fach["id"], tag, start, end)
+        )
 
         return redirect(url_for("week_view"))
 
-    return render_template("lesson_add.html")
+    return render_template("add_lesson.html")
 
-# App routes
-@app.route("/", methods=["GET", "POST"])
+
+# -----------------------------
+# STUNDENPLAN ANZEIGEN
+# -----------------------------
+@app.route("/week")
 @login_required
-def index():
-    # GET
-    if request.method == "GET":
-        todos = db_read("SELECT id, content, due FROM todos WHERE user_id=%s ORDER BY due", (current_user.id,))
-        return render_template("main_page.html", todos=todos)
+def week_view():
+    eintraege = db_read("""
+        SELECT 
+            stundenplan.tag,
+            stundenplan.startzeit,
+            stundenplan.endzeit,
+            faecher.fachname,
+            lehrer.name AS lehrer,
+            raum.raumnummer AS raum
+        FROM stundenplan
+        JOIN faecher ON stundenplan.fach_id = faecher.id
+        JOIN lehrer ON faecher.lehrer_id = lehrer.id
+        JOIN raum ON faecher.raum_id = raum.id
+        WHERE stundenplan.user_id=%s
+        ORDER BY FIELD(stundenplan.tag, 'Montag','Dienstag','Mittwoch','Donnerstag','Freitag'), startzeit
+    """, (current_user.id,))
 
-    # POST
-    content = request.form["contents"]
-    due = request.form["due_at"]
-    db_write("INSERT INTO todos (user_id, content, due) VALUES (%s, %s, %s)", (current_user.id, content, due, ))
-    return redirect(url_for("index"))
+    # Struktur für Template
+    wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
+    stundenplan = {tag: [] for tag in wochentage}
 
-@app.post("/complete")
-@login_required
-def complete():
-    todo_id = request.form.get("id")
-    db_write("DELETE FROM todos WHERE user_id=%s AND id=%s", (current_user.id, todo_id,))
-    return redirect(url_for("index"))
+    for e in eintraege:
+        stundenplan[e["tag"]].append({
+            "fachname": e["fachname"],
+            "lehrer": e["lehrer"],
+            "raum": e["raum"],
+            "startzeit": e["startzeit"].strftime("%H:%M"),
+            "endzeit": e["endzeit"].strftime("%H:%M")
+        })
 
+    return render_template("week_view.html", stundenplan=stundenplan)
+
+
+# -----------------------------
+# START APP
+# -----------------------------
 if __name__ == "__main__":
     app.run()

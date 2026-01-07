@@ -1,25 +1,49 @@
+-- Tabelle für Schüler
+CREATE TABLE schueler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    klasse VARCHAR(50)
+);
+
+-- Tabelle für Lehrer
+CREATE TABLE lehrer (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100)
+);
+
+-- Tabelle für Räume
+CREATE TABLE raum (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    raumnummer VARCHAR(50) NOT NULL,
+    kapazitaet INT
+);
+
+-- Tabelle für Fächer
+CREATE TABLE faecher (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    fachname VARCHAR(100) NOT NULL,
+    lehrer_id INT,
+    raum_id INT,
+    FOREIGN KEY (lehrer_id) REFERENCES lehrer(id),
+    FOREIGN KEY (raum_id) REFERENCES raum(id)
+);
+
+-- Tabelle für Stundenplan
+CREATE TABLE stundenplan (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    fach_id INT NOT NULL,
+    tag VARCHAR(20),
+    startzeit TIME,
+    endzeit TIME,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (fach_id) REFERENCES faecher(id)
+);
+
+);
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(250) NOT NULL UNIQUE,
     password VARCHAR(250) NOT NULL
-);
-
-CREATE TABLE todos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    content VARCHAR(100),
-    due DATETIME,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE TABLE lessons (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    subject VARCHAR(100),
-    teacher VARCHAR(100),
-    room VARCHAR(50),
-    weekday INT,       -- 1=Montag … 5=Freitag
-    start_time TIME,
-    end_time TIME,
-    FOREIGN KEY (user_id) REFERENCES users(id)
 );

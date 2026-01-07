@@ -1,50 +1,98 @@
-{% extends "base.html" %}
+# -----------------------------
+#   FACH HINZUFÜGEN
+# -----------------------------
+@app.route("/add_lesson", methods=["GET", "POST"])
+@login_required
+def add_lesson():
+    if request.method == "POST":
+        subject = request.form["subject"]
+        teacher_name = request.form["teacher"]
+        room_number = request.form["room"]
+        weekday = request.form["weekday"]
+        start = request.form["start"]
+        end = request.form["end"]
 
-{% block content %}
-    <ul class="todo-list">
-          {% for todo in todos %}
-            <li class="todo-item">
-              <form action="/complete" method="POST" class="todo-complete-form">
+        # Wochentag von Zahl → Text
+        tage = {
+            "1": "Montag",
+            "2": "Dienstag",
+            "3": "Mittwoch",
+            "4": "Donnerstag",
+            "5": "Freitag"
+        }
+        tag = tage[weekday]
 
-                <input type="hidden" name="id" value="{{ todo.id }}">
+        # 1. Lehrer speichern oder finden
+        teacher = Lehrer.query.filter_by(name=teacher_name).first()
+        if not teacher:
+            teacher = Lehrer(name=teacher_name)
+            db.session.add(teacher)
+            db.session.commit()
 
-                <!-- Checkbox triggert Submit -->
-                <input
-                  type="checkbox"
-                  class="todo-checkbox"
-                  id="todo-{{ todo.id }}"
-                  name="complete"
-                  value="1"
-                  onchange="this.form.submit()">
+        # 2. Raum speichern oder finden
+        room = Raum.query.filter_by(raumnummer=room_number).first()
+        if not room:
+            room = Raum(raumnummer=room_number)
+            db.session.add(room)
+            db.session.commit()
 
-                <label for="todo-{{ todo.id }}" class="todo-content">
-                  {{ todo.content }}
-                  <span class="todo-date">📅 {{ todo.due.strftime('%d.%m.%Y %H:%M') }}</span>
-                </label>
-              </form>
-            </li>
-          {% else %}
-            <div>Nichts zu tun🎉</div>
-          {% endfor %}
-        </ul>
+        # 3. Fach speichern oder finden
+        fach = Faecher.query.filter_by(
+            fachname=subject,
+            lehrer_id=teacher.id,
+            raum_id=room.id
+        ).first()
 
-      <div class="todo-form">
-        <form action="." method="POST">
-          <div class="form-group">
-            <label for="contents">TODO</label>
-            <input type="text" id="contents" name="contents" class="form-control"
-              placeholder="Neues TODO eingeben…" required />
-          </div>
+        if not fach:
+            fach = Faecher(
+                fachname=subject,
+                lehrer_id=teacher.id,
+                raum_id=room.id
+            )
+            db.session.add(fach)
+            db.session.commit()
 
-          <div class="form-group">
-            <label for="due_at">Fällig am</label>
-            <input id="due_at" name="due_at" type="datetime-local" class="form-control" required>
-            <p class="help-block">Wähle Datum & Uhrzeit (z. B. 07.11.2025 14:30).</p>
-          </div>
+        # 4. Stundenplan-Eintrag speichern
+        eintrag = Stundenplan(
+            schueler_id=current_user.id,
+            fach_id=fach.id,
+            tag=tag,
+            startzeit=start,
+            endzeit=end
+        )
+        db.session.add(eintrag)
+        db.session.commit()
 
-          <button type="submit" class="btn btn-primary">Hinzufügen</button>
-        </form>
-      </div>
-{% endblock %}
+        return redirect(url_for("week_view"))
 
-      
+    return render_template("add_lesson.html")
+
+
+# -----------------------------
+#   STUNDENPLAN ANZEIGEN
+# -----------------------------
+@app.route("/week_view")
+@login_required
+def week_view():
+    eintraege = (
+        db.session.query(Stundenplan, Faecher, Lehrer, Raum)
+        .join(Faecher, Stundenplan.fach_id == Faecher.id)
+        .join(Lehrer, Faecher.lehrer_id == Lehrer.id)
+        .join(Raum, Faecher.raum_id == Raum.id)
+        .filter(Stundenplan.schueler_id == current_user.id)
+        .all()
+    )
+
+    wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
+    stundenplan = {tag: [] for tag in wochentage}
+
+    for sp, fach, lehrer, raum in eintraege:
+        stundenplan[sp.tag].append({
+            "fachname": fach.fachname,
+            "lehrer": lehrer.name,
+            "raum": raum.raumnummer,
+            "startzeit": sp.startzeit.strftime("%H:%M"),
+            "endzeit": sp.endzeit.strftime("%H:%M")
+        })
+
+    return render_template("week_view.html", stundenplan=stundenplan)
