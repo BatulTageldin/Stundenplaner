@@ -8,7 +8,7 @@ from db import db_read, db_write
 from auth import login_manager, authenticate, register_user
 from flask_login import login_user, logout_user, login_required, current_user
 import logging
-import jsonify
+from flask import jsonify
 
 logging.basicConfig(
     level=logging.DEBUG,
