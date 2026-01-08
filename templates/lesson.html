@@ -55,44 +55,8 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
 
-  // Lehrer + Räume direkt im Code
-  const daten = {
-    "Sport": [
-      { name: "Claudia Imhof", raum: "418" },
-      { name: "Marco Sabbatini", raum: "404" }
-    ],
-    "Physik": [
-      { name: "Caroline Haug", raum: "423" },
-      { name: "Dr. Axelle Krayenbühl-Tapponnier", raum: "618" },
-      { name: "Patrik Weber", raum: "601" }
-    ],
-    "Musik": [
-      { name: "Hansueli Bamert", raum: "415" }
-    ],
-    "Mathematik": [
-      { name: "Dr. Jan-Mark Iniotakis", raum: "606" },
-      { name: "Anh Huy Truong", raum: "424" }
-    ],
-    "Informatik": [
-      { name: "Luca Egli", raum: "401" },
-      { name: "Lars Rafeldt", raum: "505" },
-      { name: "Dr. Thomas Preu", raum: "614" }
-    ],
-    "Geschichte": [
-      { name: "Dr. Sebastian Bott", raum: "609" },
-      { name: "Valentin Schönherr", raum: "516" },
-    
-    ],
-    "Geographie": [
-      { name: "Philipp Rüdisühli", raum: "520" },
-      { name: "Christian Schmidteter", raum: "421" }
-    ],
-    "Chemie": [
-      { name: "Dr. Christian Ammann", raum: "614" },
-      { name: "Dr. Jonas Halter", raum: "606" }
-    ],
-   
-  };
+  // Daten kommen direkt aus Flask (TEACHER_DATA)
+  const daten = {{ teacher_data | tojson }};
 
   const subjectSelect = document.getElementById("subject");
   const teacherSelect = document.getElementById("teacher");
@@ -104,17 +68,26 @@ document.addEventListener("DOMContentLoaded", function() {
     teacherSelect.innerHTML = "";
     roomInput.value = "";
 
+    // Wenn Fach keine Einträge in daten hat (z.B. Englisch): Hinweis anzeigen
     if (!daten[fach] || daten[fach].length === 0) {
       teacherSelect.innerHTML = '<option value="">Keine Lehrer verfügbar</option>';
       return;
     }
 
-    daten[fach].forEach(lehrer => {
+    // Lehreroptionen füllen
+    daten[fach].forEach(function(lehrer) {
       const option = document.createElement("option");
       option.value = lehrer.name;
       option.textContent = lehrer.name;
       teacherSelect.appendChild(option);
     });
+
+    // Optional: ersten Lehrer direkt auswählen und Raum setzen
+    if (teacherSelect.options.length > 0) {
+      teacherSelect.selectedIndex = 0;
+      const ersterLehrer = daten[fach][0];
+      roomInput.value = ersterLehrer.room || "";
+    }
   });
 
   // Wenn Lehrer gewählt wird → Raum anzeigen
@@ -122,8 +95,16 @@ document.addEventListener("DOMContentLoaded", function() {
     const fach = subjectSelect.value;
     const lehrerName = this.value;
 
-    const lehrer = daten[fach].find(l => l.name === lehrerName);
-    roomInput.value = lehrer ? lehrer.raum : "";
+    if (!daten[fach]) {
+      roomInput.value = "";
+      return;
+    }
+
+    const lehrer = daten[fach].find(function(l) {
+      return l.name === lehrerName;
+    });
+
+    roomInput.value = lehrer ? lehrer.room : "";
   });
 
 });

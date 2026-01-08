@@ -37,15 +37,14 @@ TEACHER_DATA = {
     ],
     "Geographie": [
         {"name": "Philipp Rüdisühli", "room": "520"},
-    ],
-    "Geschichte & Geographie": [
-        {"name": "Christian Schmidteter", "room": "421 / 612"},
+        {"name": "Christian Schmidteter", "room": "421"},
     ],
     "Chemie": [
         {"name": "Dr. Christian Ammann", "room": "614"},
         {"name": "Dr. Jonas Halter", "room": "606"},
     ],
 }
+
 
 
 logging.basicConfig(
