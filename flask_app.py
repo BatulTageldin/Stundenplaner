@@ -238,8 +238,10 @@ def week_view():
             "fachname": e["fachname"],
             "lehrer": e["lehrer"],
             "raum": e["raum"],
-            "startzeit": e["startzeit"].strftime("%H:%M"),
-            "endzeit": e["endzeit"].strftime("%H:%M")
+
+            # FIX: timedelta → String (HH:MM)
+            "startzeit": str(e["startzeit"])[:5],
+            "endzeit": str(e["endzeit"])[:5]
         })
 
     return render_template("week.html", stundenplan=stundenplan)
