@@ -204,7 +204,14 @@ def add_lesson():
 
         return redirect(url_for("week_view"))
 
-    return render_template("lesson.html")
+    lehrers =  db_read("""
+        SELECT 
+            id,
+            name
+        FROM lehrer
+        ORDER BY name
+    """)
+    return render_template("lesson.html", lehrers=lehrers)
 
 
 # -----------------------------
