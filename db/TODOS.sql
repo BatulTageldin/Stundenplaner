@@ -41,7 +41,7 @@ CREATE TABLE stundenplan (
     FOREIGN KEY (fach_id) REFERENCES faecher(id)
 );
 
-);
+
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(250) NOT NULL UNIQUE,
