@@ -204,7 +204,7 @@ def add_lesson():
 
         return redirect(url_for("week_view"))
 
-    return render_template("add_lesson.html")
+    return render_template("lesson.html")
 
 
 # -----------------------------
