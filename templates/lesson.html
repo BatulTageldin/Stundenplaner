@@ -1,64 +1,33 @@
-@app.route("/add_lesson", methods=["GET", "POST"])
-def add_lesson():
-    if request.method == "POST":
-        subject = request.form["subject"]
-        teacher_name = request.form["teacher"]
-        room_number = request.form["room"]
-        weekday = request.form["weekday"]
-        start = request.form["start"]
-        end = request.form["end"]
+{% extends "base.html" %}
 
-        # Wochentag von Zahl → Text umwandeln
-        tage = {
-            "1": "Montag",
-            "2": "Dienstag",
-            "3": "Mittwoch",
-            "4": "Donnerstag",
-            "5": "Freitag"
-        }
-        tag = tage[weekday]
+{% block content %}
+<h2>Fach hinzufügen</h2>
 
-        # 1. Lehrer speichern oder finden
-        teacher = Lehrer.query.filter_by(name=teacher_name).first()
-        if not teacher:
-            teacher = Lehrer(name=teacher_name)
-            db.session.add(teacher)
-            db.session.commit()
+<form method="post">
+  <label>Fach:</label><br>
+  <input type="text" name="subject"><br><br>
 
-        # 2. Raum speichern oder finden
-        room = Raum.query.filter_by(raumnummer=room_number).first()
-        if not room:
-            room = Raum(raumnummer=room_number)
-            db.session.add(room)
-            db.session.commit()
+  <label>Lehrer:</label><br>
+  <input type="text" name="teacher"><br><br>
 
-        # 3. Fach speichern oder finden
-        fach = Faecher.query.filter_by(
-            fachname=subject,
-            lehrer_id=teacher.id,
-            raum_id=room.id
-        ).first()
+  <label>Raum:</label><br>
+  <input type="text" name="room"><br><br>
 
-        if not fach:
-            fach = Faecher(
-                fachname=subject,
-                lehrer_id=teacher.id,
-                raum_id=room.id
-            )
-            db.session.add(fach)
-            db.session.commit()
+  <label>Wochentag:</label><br>
+  <select name="weekday">
+    <option value="1">Montag</option>
+    <option value="2">Dienstag</option>
+    <option value="3">Mittwoch</option>
+    <option value="4">Donnerstag</option>
+    <option value="5">Freitag</option>
+  </select><br><br>
 
-        # 4. Stundenplan-Eintrag speichern
-        eintrag = Stundenplan(
-            schueler_id=current_user.id,  # oder anderer Schüler
-            fach_id=fach.id,
-            tag=tag,
-            startzeit=start,
-            endzeit=end
-        )
-        db.session.add(eintrag)
-        db.session.commit()
+  <label>Startzeit:</label><br>
+  <input type="time" name="start"><br><br>
 
-        return redirect(url_for("week_view"))
+  <label>Endzeit:</label><br>
+  <input type="time" name="end"><br><br>
 
-    return render_template("lesson.html")
+  <button type="submit">Speichern</button>
+</form>
+{% endblock %}
