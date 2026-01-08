@@ -10,20 +10,6 @@ from flask_login import login_user, logout_user, login_required, current_user
 import logging
 import json
 
-@app.route("/api/lehrer/<fachname>")
-def api_lehrer(fachname):
-    rows = db_read("""
-        SELECT lehrer.name FROM faecher
-        JOIN lehrer ON faecher.lehrer_id = lehrer.id
-        WHERE faecher.fachname = %s
-    """, (fachname,))
-    return app.response_class(
-        response=json.dumps(rows),
-        status=200,
-        mimetype='application/json'
-    )
-
-
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -42,7 +28,10 @@ app.secret_key = "supersecret"
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
-# DON'T CHANGE
+
+# -----------------------------
+# GITHUB WEBHOOK (NICHT ÄNDERN)
+# -----------------------------
 def is_valid_signature(x_hub_signature, data, private_key):
     hash_algorithm, github_signature = x_hub_signature.split('=', 1)
     algorithm = hashlib.__dict__.get(hash_algorithm)
@@ -50,7 +39,7 @@ def is_valid_signature(x_hub_signature, data, private_key):
     mac = hmac.new(encoded_key, msg=data, digestmod=algorithm)
     return hmac.compare_digest(mac.hexdigest(), github_signature)
 
-# DON'T CHANGE
+
 @app.post('/update_server')
 def webhook():
     x_hub_signature = request.headers.get('X-Hub-Signature')
@@ -155,8 +144,6 @@ def add_lesson():
         weekday = request.form["weekday"]
         start, end = request.form["timeblock"].split("-")
 
-
-        # Wochentag von Zahl → Text
         tage = {
             "1": "Montag",
             "2": "Dienstag",
@@ -244,7 +231,6 @@ def week_view():
         ORDER BY FIELD(stundenplan.tag, 'Montag','Dienstag','Mittwoch','Donnerstag','Freitag'), startzeit
     """, (current_user.id,))
 
-    # Struktur für Template
     wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
     stundenplan = {tag: [] for tag in wochentage}
 
@@ -253,8 +239,6 @@ def week_view():
             "fachname": e["fachname"],
             "lehrer": e["lehrer"],
             "raum": e["raum"],
-
-            # FIX: timedelta → String (HH:MM)
             "startzeit": str(e["startzeit"])[:5],
             "endzeit": str(e["endzeit"])[:5]
         })
@@ -262,32 +246,9 @@ def week_view():
     return render_template("week.html", stundenplan=stundenplan)
 
 
+
 # -----------------------------
 # START APP
 # -----------------------------
 if __name__ == "__main__":
     app.run()
-
-@app.route("/api/lehrer/<fachname>")
-def api_lehrer(fachname):
-    rows = db_read("""
-        SELECT lehrer.name FROM faecher
-        JOIN lehrer ON faecher.lehrer_id = lehrer.id
-        WHERE faecher.fachname = %s
-    """, (fachname,))
-    return jsonify(rows)
-
-@app.route("/api/raum/<lehrername>")
-def api_raum(lehrername):
-    row = db_read("""
-        SELECT raum.raumnummer FROM lehrer
-        JOIN faecher ON faecher.lehrer_id = lehrer.id
-        JOIN raum ON faecher.raum_id = raum.id
-        WHERE lehrer.name = %s
-        LIMIT 1
-    """, (lehrername,), single=True)
-    return app.response_class(
-        response=json.dumps({"raum": row["raumnummer"] if row else ""}),
-        status=200,
-        mimetype='application/json'
-    )
