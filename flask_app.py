@@ -9,6 +9,45 @@ from auth import login_manager, authenticate, register_user
 from flask_login import login_user, logout_user, login_required, current_user
 import logging
 
+TEACHER_DATA = {
+    "Sport": [
+        {"name": "Claudia Imhof", "room": "418"},
+        {"name": "Marco Sabbatini", "room": "404"},
+    ],
+    "Physik": [
+        {"name": "Caroline Haug", "room": "423"},
+        {"name": "Dr. Axelle Krayenbühl-Tapponnier", "room": "618"},
+        {"name": "Patrik Weber", "room": "601"},
+    ],
+    "Musik": [
+        {"name": "Hansueli Bamert", "room": "415"},
+    ],
+    "Mathematik": [
+        {"name": "Dr. Jan-Mark Iniotakis", "room": "606"},
+        {"name": "Anh Huy Truong", "room": "424"},
+    ],
+    "Informatik": [
+        {"name": "Luca Egli", "room": "401"},
+        {"name": "Lars Rafeldt", "room": "505"},
+        {"name": "Dr. Thomas Preu", "room": "614"},
+    ],
+    "Geschichte": [
+        {"name": "Dr. Sebastian Bott", "room": "609"},
+        {"name": "Valentin Schönherr", "room": "516"},
+    ],
+    "Geographie": [
+        {"name": "Philipp Rüdisühli", "room": "520"},
+    ],
+    "Geschichte & Geographie": [
+        {"name": "Christian Schmidteter", "room": "421 / 612"},
+    ],
+    "Chemie": [
+        {"name": "Dr. Christian Ammann", "room": "614"},
+        {"name": "Dr. Jonas Halter", "room": "606"},
+    ],
+}
+
+
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -205,7 +244,8 @@ def add_lesson():
 
         return redirect(url_for("week_view"))
 
-    return render_template("lesson.html")
+    return render_template("lesson.html", teacher_data=TEACHER_DATA)
+
 
 
 # -----------------------------
