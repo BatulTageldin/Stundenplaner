@@ -138,8 +138,8 @@ def add_lesson():
         teacher_name = request.form.get("teacher", "unbekannt")
         room_number = request.form.get("room", "unbekannt")
         weekday = request.form["weekday"]
-        start = request.form["start"]
-        end = request.form["end"]
+        start, end = request.form["timeblock"].split("-")
+
 
         # Wochentag von Zahl → Text
         tage = {
