@@ -242,7 +242,7 @@ def week_view():
             "endzeit": e["endzeit"].strftime("%H:%M")
         })
 
-    return render_template("week_view.html", stundenplan=stundenplan)
+    return render_template("week.html", stundenplan=stundenplan)
 
 
 # -----------------------------
