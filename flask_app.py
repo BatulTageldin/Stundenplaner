@@ -8,7 +8,21 @@ from db import db_read, db_write
 from auth import login_manager, authenticate, register_user
 from flask_login import login_user, logout_user, login_required, current_user
 import logging
-from flask import jsonify
+import json
+
+@app.route("/api/lehrer/<fachname>")
+def api_lehrer(fachname):
+    rows = db_read("""
+        SELECT lehrer.name FROM faecher
+        JOIN lehrer ON faecher.lehrer_id = lehrer.id
+        WHERE faecher.fachname = %s
+    """, (fachname,))
+    return app.response_class(
+        response=json.dumps(rows),
+        status=200,
+        mimetype='application/json'
+    )
+
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -272,4 +286,8 @@ def api_raum(lehrername):
         WHERE lehrer.name = %s
         LIMIT 1
     """, (lehrername,), single=True)
-    return jsonify({"raum": row["raumnummer"] if row else ""})
+    return app.response_class(
+        response=json.dumps({"raum": row["raumnummer"] if row else ""}),
+        status=200,
+        mimetype='application/json'
+    )
