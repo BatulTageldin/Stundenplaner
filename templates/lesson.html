@@ -4,17 +4,18 @@
 <h2>Fach hinzufügen</h2>
 
 <form method="post">
+
   <label>Fach:</label><br>
-  <input type="text" name="subject"><br><br>
+  <input type="text" name="subject" required><br><br>
 
   <label>Lehrer:</label><br>
-  <input type="text" name="teacher"><br><br>
+  <input type="text" name="teacher" required><br><br>
 
   <label>Raum:</label><br>
-  <input type="text" name="room"><br><br>
+  <input type="text" name="room" required><br><br>
 
   <label>Wochentag:</label><br>
-  <select name="weekday">
+  <select name="weekday" required>
     <option value="1">Montag</option>
     <option value="2">Dienstag</option>
     <option value="3">Mittwoch</option>
@@ -23,11 +24,12 @@
   </select><br><br>
 
   <label>Startzeit:</label><br>
-  <input type="time" name="start"><br><br>
+  <input type="time" name="start" step="60" required><br><br>
 
   <label>Endzeit:</label><br>
-  <input type="time" name="end"><br><br>
+  <input type="time" name="end" step="60" required><br><br>
 
   <button type="submit">Speichern</button>
+
 </form>
 {% endblock %}
