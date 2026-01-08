@@ -9,44 +9,6 @@ from auth import login_manager, authenticate, register_user
 from flask_login import login_user, logout_user, login_required, current_user
 import logging
 
-TEACHER_DATA = {
-    "Sport": [
-        {"name": "Claudia Imhof", "room": "418"},
-        {"name": "Marco Sabbatini", "room": "404"},
-    ],
-    "Physik": [
-        {"name": "Caroline Haug", "room": "423"},
-        {"name": "Dr. Axelle Krayenbühl-Tapponnier", "room": "618"},
-        {"name": "Patrik Weber", "room": "601"},
-    ],
-    "Musik": [
-        {"name": "Hansueli Bamert", "room": "415"},
-    ],
-    "Mathematik": [
-        {"name": "Dr. Jan-Mark Iniotakis", "room": "606"},
-        {"name": "Anh Huy Truong", "room": "424"},
-    ],
-    "Informatik": [
-        {"name": "Luca Egli", "room": "401"},
-        {"name": "Lars Rafeldt", "room": "505"},
-        {"name": "Dr. Thomas Preu", "room": "614"},
-    ],
-    "Geschichte": [
-        {"name": "Dr. Sebastian Bott", "room": "609"},
-        {"name": "Valentin Schönherr", "room": "516"},
-    ],
-    "Geographie": [
-        {"name": "Philipp Rüdisühli", "room": "520"},
-        {"name": "Christian Schmidteter", "room": "421"},
-    ],
-    "Chemie": [
-        {"name": "Dr. Christian Ammann", "room": "614"},
-        {"name": "Dr. Jonas Halter", "room": "606"},
-    ],
-}
-
-
-
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -65,10 +27,7 @@ app.secret_key = "supersecret"
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
-
-# -----------------------------
-# GITHUB WEBHOOK (NICHT ÄNDERN)
-# -----------------------------
+# DON'T CHANGE
 def is_valid_signature(x_hub_signature, data, private_key):
     hash_algorithm, github_signature = x_hub_signature.split('=', 1)
     algorithm = hashlib.__dict__.get(hash_algorithm)
@@ -76,7 +35,7 @@ def is_valid_signature(x_hub_signature, data, private_key):
     mac = hmac.new(encoded_key, msg=data, digestmod=algorithm)
     return hmac.compare_digest(mac.hexdigest(), github_signature)
 
-
+# DON'T CHANGE
 @app.post('/update_server')
 def webhook():
     x_hub_signature = request.headers.get('X-Hub-Signature')
@@ -176,11 +135,13 @@ def logout():
 def add_lesson():
     if request.method == "POST":
         subject = request.form["subject"]
-        teacher_name = request.form["teacher"]
-        room_number = request.form["room"]
+        teacher_name = request.form.get("teacher", "unbekannt")
+        room_number = request.form.get("room", "unbekannt")
         weekday = request.form["weekday"]
         start, end = request.form["timeblock"].split("-")
 
+
+        # Wochentag von Zahl → Text
         tage = {
             "1": "Montag",
             "2": "Dienstag",
@@ -243,8 +204,7 @@ def add_lesson():
 
         return redirect(url_for("week_view"))
 
-    return render_template("lesson.html", teacher_data=TEACHER_DATA)
-
+    return render_template("lesson.html")
 
 
 # -----------------------------
@@ -269,6 +229,7 @@ def week_view():
         ORDER BY FIELD(stundenplan.tag, 'Montag','Dienstag','Mittwoch','Donnerstag','Freitag'), startzeit
     """, (current_user.id,))
 
+    # Struktur für Template
     wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
     stundenplan = {tag: [] for tag in wochentage}
 
@@ -277,12 +238,13 @@ def week_view():
             "fachname": e["fachname"],
             "lehrer": e["lehrer"],
             "raum": e["raum"],
+
+            # FIX: timedelta → String (HH:MM)
             "startzeit": str(e["startzeit"])[:5],
             "endzeit": str(e["endzeit"])[:5]
         })
 
     return render_template("week.html", stundenplan=stundenplan)
-
 
 
 # -----------------------------
