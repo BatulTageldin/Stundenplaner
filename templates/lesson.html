@@ -13,7 +13,7 @@
 
   <label>Lehrer:</label><br>
   <select name="teacher1" required>
-  {% for lehrer in lehrers.items() %}
+  {% for lehrer in lehrers %}
       <option value={{lehrer.id}}>{{ lehrer.name }}</option>
   {% endfor %}
   </select>
