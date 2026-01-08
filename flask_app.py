@@ -135,8 +135,8 @@ def logout():
 def add_lesson():
     if request.method == "POST":
         subject = request.form["subject"]
-        teacher_name = request.form.get("teacher", "unbekannt")
-        room_number = request.form.get("room", "unbekannt")
+        teacher_name = request.form["teacher"]
+        room_number = request.form["room"]
         weekday = request.form["weekday"]
         start, end = request.form["timeblock"].split("-")
 
@@ -252,3 +252,23 @@ def week_view():
 # -----------------------------
 if __name__ == "__main__":
     app.run()
+
+@app.route("/api/lehrer/<fachname>")
+def api_lehrer(fachname):
+    rows = db_read("""
+        SELECT lehrer.name FROM faecher
+        JOIN lehrer ON faecher.lehrer_id = lehrer.id
+        WHERE faecher.fachname = %s
+    """, (fachname,))
+    return jsonify(rows)
+
+@app.route("/api/raum/<lehrername>")
+def api_raum(lehrername):
+    row = db_read("""
+        SELECT raum.raumnummer FROM lehrer
+        JOIN faecher ON faecher.lehrer_id = lehrer.id
+        JOIN raum ON faecher.raum_id = raum.id
+        WHERE lehrer.name = %s
+        LIMIT 1
+    """, (lehrername,), single=True)
+    return jsonify({"raum": row["raumnummer"] if row else ""})

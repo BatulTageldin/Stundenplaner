@@ -6,13 +6,28 @@
 <form method="post">
 
   <label>Fach:</label><br>
-  <input type="text" name="subject" required><br><br>
+  <select name="subject" id="subject" required>
+    <option value="">Bitte wählen</option>
+    <option value="Sport">Sport</option>
+    <option value="Physik">Physik</option>
+    <option value="Musik">Musik</option>
+    <option value="Mathematik">Mathematik</option>
+    <option value="Informatik">Informatik</option>
+    <option value="Geschichte">Geschichte</option>
+    <option value="Geographie">Geographie</option>
+    <option value="Englisch">Englisch</option>
+    <option value="Deutsch">Deutsch</option>
+    <option value="Chemie">Chemie</option>
+    <option value="Bildnerisches Gestalten">Bildnerisches Gestalten</option>
+  </select><br><br>
 
   <label>Lehrer:</label><br>
-  <input type="text" name="teacher" required><br><br>
+  <select name="teacher" id="teacher" required>
+    <option value="">Bitte zuerst Fach wählen</option>
+  </select><br><br>
 
   <label>Raum:</label><br>
-  <input type="text" name="room" required><br><br>
+  <input type="text" name="room" id="room" readonly><br><br>
 
   <label>Wochentag:</label><br>
   <select name="weekday" required>
@@ -36,4 +51,31 @@
   <button type="submit">Speichern</button>
 
 </form>
+
+<script>
+document.getElementById("subject").addEventListener("change", function() {
+  const fach = this.value;
+  fetch("/api/lehrer/" + fach)
+    .then(response => response.json())
+    .then(data => {
+      const teacherSelect = document.getElementById("teacher");
+      teacherSelect.innerHTML = "";
+      data.forEach(lehrer => {
+        const option = document.createElement("option");
+        option.value = lehrer.name;
+        option.textContent = lehrer.name;
+        teacherSelect.appendChild(option);
+      });
+    });
+});
+
+document.getElementById("teacher").addEventListener("change", function() {
+  const lehrer = this.value;
+  fetch("/api/raum/" + lehrer)
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById("room").value = data.raum;
+    });
+});
+</script>
 {% endblock %}
