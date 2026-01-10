@@ -104,9 +104,8 @@ def register():
         password = request.form["password"]
         role = request.form["role"]
 
-        ok = register_user(username, password, role)
-        if ok:
-            user_id = ok  # now returns user_id
+        user_id = register_user(username, password, role)
+        if user_id:
             if role == 'teacher':
                 # Add to lehrer table
                 db_write("INSERT INTO lehrer (name, user_id) VALUES (%s, %s)", (username, user_id))

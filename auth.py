@@ -85,6 +85,7 @@ def register_user(username, password, role):
         return False
 
     hashed = generate_password_hash(password)
+    user_id = None
     try:
         db_write(
             "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
