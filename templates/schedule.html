@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Fach zum Stundenplan hinzufügen</h2>
+
+<form method="post">
+
+  <label>Fach:</label><br>
+  <select name="fach" required>
+    {% for fach in faecher %}
+      <option value="{{ fach.id }}">{{ fach.fachname }} ({{ fach.lehrer }}, {{ fach.raum }})</option>
+    {% endfor %}
+  </select><br><br>
+
+  <label>Wochentag:</label><br>
+  <select name="weekday" required>
+    <option value="1">Montag</option>
+    <option value="2">Dienstag</option>
+    <option value="3">Mittwoch</option>
+    <option value="4">Donnerstag</option>
+    <option value="5">Freitag</option>
+  </select><br><br>
+
+  <label>Zeitblock:</label><br>
+  <select name="timeblock" required>
+    <option value="08:45-09:25">08:45 – 09:25</option>
+    <option value="09:35-10:20">09:35 – 10:20</option>
+    <option value="10:35-11:20">10:35 – 11:20</option>
+    <option value="11:30-12:15">11:30 – 12:15</option>
+    <option value="13:20-14:05">13:20 – 14:05</option>
+    <option value="14:15-15:00">14:15 – 15:00</option>
+  </select><br><br>
+
+  <button type="submit">Hinzufügen</button>
+
+</form>
+{% endblock %}

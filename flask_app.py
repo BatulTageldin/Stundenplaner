@@ -236,6 +236,49 @@ def add_teacher():
 
 
 # -----------------------------
+# STUNDENPLAN AKTUALISIEREN
+# -----------------------------
+@app.route("/schedule/add", methods=["GET", "POST"])
+@login_required
+def add_schedule():
+    if request.method == "POST":
+        fach_id = request.form["fach"]
+        weekday = request.form["weekday"]
+        start, end = request.form["timeblock"].split("-")
+
+        # Wochentag von Zahl → Text
+        tage = {
+            "1": "Montag",
+            "2": "Dienstag",
+            "3": "Mittwoch",
+            "4": "Donnerstag",
+            "5": "Freitag"
+        }
+        tag = tage[weekday]
+
+        # Stundenplan-Eintrag speichern
+        db_write(
+            "INSERT INTO stundenplan (user_id, fach_id, tag, startzeit, endzeit) VALUES (%s,%s,%s,%s,%s)",
+            (current_user.id, fach_id, tag, start, end)
+        )
+
+        return redirect(url_for("week_view"))
+
+    faecher = db_read("""
+        SELECT 
+            faecher.id,
+            faecher.fachname,
+            lehrer.name AS lehrer,
+            raum.raumnummer AS raum
+        FROM faecher
+        JOIN lehrer ON faecher.lehrer_id = lehrer.id
+        JOIN raum ON faecher.raum_id = raum.id
+        ORDER BY faecher.fachname
+    """) or []
+    return render_template("schedule.html", faecher=faecher)
+
+
+# -----------------------------
 # STUNDENPLAN ANZEIGEN
 # -----------------------------
 @app.route("/week")
