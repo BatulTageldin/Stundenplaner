@@ -42,13 +42,15 @@ def db_read(sql, params=None, single=False):
         conn.close()
 
 
-def db_write(sql, params=None):
+def db_write(sql, params=None, return_id=False):
     conn = get_conn()
     try:
         cur = conn.cursor()
         cur.execute(sql, params or ())
         conn.commit()
         print("db_write OK:", sql, params)  # DEBUG
+        if return_id:
+            return cur.lastrowid
     finally:
         try:
             cur.close()

@@ -85,13 +85,12 @@ def register_user(username, password, role):
         return False
 
     hashed = generate_password_hash(password)
-    user_id = None
     try:
-        db_write(
+        user_id = db_write(
             "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
-            (username, hashed, role)
+            (username, hashed, role),
+            return_id=True
         )
-        user_id = db_read("SELECT LAST_INSERT_ID() as id", single=True)["id"]
         logger.info("register_user(): User '%s' erfolgreich angelegt", username)
     except Exception:
         logger.exception("Fehler beim Anlegen von User '%s'", username)
