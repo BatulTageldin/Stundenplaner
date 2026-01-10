@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Alle Fächer</h2>
+
+<style>
+  .subject-card {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+  }
+</style>
+
+{% for subject in subjects %}
+  <div class="subject-card">
+    <strong>{{ subject.fachname }}</strong><br>
+    Lehrer: {{ subject.lehrer }}<br>
+    Raum: {{ subject.raum }}<br>
+    Tag: {{ subject.tag }}<br>
+    Zeit: {{ subject.startzeit }} – {{ subject.endzeit }}
+  </div>
+{% endfor %}
+
+{% endblock %}

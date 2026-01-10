@@ -53,7 +53,10 @@ def webhook():
 @app.route("/")
 def index():
     if current_user.is_authenticated:
-        return redirect(url_for("week_view"))
+        if current_user.role == 'student':
+            return redirect(url_for("week_view"))
+        elif current_user.role == 'teacher':
+            return redirect(url_for("teacher_week"))
     return redirect(url_for("login"))
 
 
@@ -348,6 +351,32 @@ def week_view():
         })
 
     return render_template("student_week.html", stundenplan=stundenplan)
+
+
+# -----------------------------
+# LEHRER FAECHER ANZEIGEN
+# -----------------------------
+@app.route("/teacher/week")
+@login_required
+def teacher_week():
+    if current_user.role != 'teacher':
+        return redirect(url_for("week_view"))
+
+    subjects = db_read("""
+        SELECT 
+            faecher.fachname,
+            lehrer.name AS lehrer,
+            raum.raumnummer AS raum,
+            faecher.tag,
+            faecher.startzeit,
+            faecher.endzeit
+        FROM faecher
+        JOIN lehrer ON faecher.lehrer_id = lehrer.id
+        JOIN raum ON faecher.raum_id = raum.id
+        ORDER BY faecher.fachname
+    """) or []
+
+    return render_template("teacher_week.html", subjects=subjects)
 
 
 # -----------------------------
