@@ -135,7 +135,7 @@ def logout():
 def add_lesson():
     if request.method == "POST":
         subject = request.form["subject"]
-        teacher_name = request.form.get("teacher", "unbekannt")
+        lehrer_id = request.form["teacher"]
         room_number = request.form.get("room", "unbekannt")
         weekday = request.form["weekday"]
         start, end = request.form["timeblock"].split("-")
@@ -150,20 +150,6 @@ def add_lesson():
             "5": "Freitag"
         }
         tag = tage[weekday]
-
-        # Lehrer speichern oder finden
-        lehrer = db_read(
-            "SELECT id FROM lehrer WHERE name=%s",
-            (teacher_name,),
-            single=True
-        )
-        if not lehrer:
-            db_write("INSERT INTO lehrer (name) VALUES (%s)", (teacher_name,))
-            lehrer = db_read(
-                "SELECT id FROM lehrer WHERE name=%s",
-                (teacher_name,),
-                single=True
-            )
 
         # Raum speichern oder finden
         raum = db_read(
@@ -182,17 +168,17 @@ def add_lesson():
         # Fach speichern oder finden
         fach = db_read(
             "SELECT id FROM faecher WHERE fachname=%s AND lehrer_id=%s AND raum_id=%s AND tag=%s AND startzeit=%s AND endzeit=%s",
-            (subject, lehrer["id"], raum["id"], tag, start, end),
+            (subject, lehrer_id, raum["id"], tag, start, end),
             single=True
         )
         if not fach:
             db_write(
                 "INSERT INTO faecher (fachname, lehrer_id, raum_id, tag, startzeit, endzeit) VALUES (%s,%s,%s,%s,%s,%s)",
-                (subject, lehrer["id"], raum["id"], tag, start, end)
+                (subject, lehrer_id, raum["id"], tag, start, end)
             )
             fach = db_read(
                 "SELECT id FROM faecher WHERE fachname=%s AND lehrer_id=%s AND raum_id=%s AND tag=%s AND startzeit=%s AND endzeit=%s",
-                (subject, lehrer["id"], raum["id"], tag, start, end),
+                (subject, lehrer_id, raum["id"], tag, start, end),
                 single=True
             )
 
