@@ -239,7 +239,17 @@ def add_teacher():
 @login_required
 def add_schedule():
     if request.method == "POST":
-        fach_id = request.form["fach"]
+        fach_id = request.form["fach_id"]
+
+        # Check if already added
+        existing = db_read(
+            "SELECT id FROM stundenplan WHERE user_id=%s AND fach_id=%s",
+            (current_user.id, fach_id),
+            single=True
+        )
+        if existing:
+            # Already added, perhaps flash message, but for now redirect
+            return redirect(url_for("week_view"))
 
         # Stundenplan-Eintrag speichern
         db_write(
@@ -249,7 +259,8 @@ def add_schedule():
 
         return redirect(url_for("week_view"))
 
-    faecher = db_read("""
+    # Get available faecher (not already in user's stundenplan)
+    available_faecher = db_read("""
         SELECT 
             faecher.id,
             faecher.fachname,
@@ -261,14 +272,12 @@ def add_schedule():
         FROM faecher
         JOIN lehrer ON faecher.lehrer_id = lehrer.id
         JOIN raum ON faecher.raum_id = raum.id
-        ORDER BY faecher.fachname
-    """) or []
+        LEFT JOIN stundenplan ON faecher.id = stundenplan.fach_id AND stundenplan.user_id = %s
+        WHERE stundenplan.id IS NULL
+        ORDER BY faecher.fachname, faecher.tag, faecher.startzeit
+    """, (current_user.id,)) or []
 
-    # Get distinct subjects
-    subjects = list(set(f['fachname'] for f in faecher))
-    subjects.sort()
-
-    return render_template("schedule.html", faecher=faecher, subjects=subjects)
+    return render_template("schedule.html", available_faecher=available_faecher)
 
 
 # -----------------------------

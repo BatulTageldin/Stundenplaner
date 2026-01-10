@@ -3,79 +3,20 @@
 {% block content %}
 <h2>Fach zum Stundenplan hinzufügen</h2>
 
-<form method="post" id="scheduleForm">
-
-  <label>Fach:</label><br>
-  <select name="subject" id="subjectSelect" required>
-    <option value="">Wählen Sie ein Fach</option>
-    {% for subject in subjects %}
-      <option value="{{ subject }}">{{ subject }}</option>
-    {% endfor %}
-  </select><br><br>
-
-  <label>Lehrer:</label><br>
-  <select name="teacher" id="teacherSelect" required disabled>
-    <option value="">Wählen Sie zuerst ein Fach</option>
-  </select><br><br>
-
-  <label>Zeit und Raum:</label><br>
-  <select name="fach" id="fachSelect" required disabled>
-    <option value="">Wählen Sie Lehrer und Fach</option>
-  </select><br><br>
-
-  <button type="submit">Hinzufügen</button>
-
-</form>
-
-<script>
-$(document).ready(function() {
-    var faecher = {{ faecher|tojson }};
-    var teachers = {};
-    var slots = {};
-
-    // Populate teachers and slots
-    faecher.forEach(function(f) {
-        if (!teachers[f.fachname]) teachers[f.fachname] = [];
-        if (teachers[f.fachname].indexOf(f.lehrer) === -1) teachers[f.fachname].push(f.lehrer);
-
-        if (!slots[f.fachname]) slots[f.fachname] = {};
-        if (!slots[f.fachname][f.lehrer]) slots[f.fachname][f.lehrer] = [];
-        slots[f.fachname][f.lehrer].push({
-            id: f.id,
-            text: f.tag + ' ' + f.startzeit + ' - ' + f.endzeit + ' (' + f.raum + ')'
-        });
-    });
-
-    $('#subjectSelect').change(function() {
-        var subject = $(this).val();
-        var teacherSelect = $('#teacherSelect');
-        teacherSelect.empty().append('<option value="">Wählen Sie einen Lehrer</option>');
-        if (subject && teachers[subject]) {
-            teachers[subject].forEach(function(teacher) {
-                teacherSelect.append('<option value="' + teacher + '">' + teacher + '</option>');
-            });
-            teacherSelect.prop('disabled', false);
-        } else {
-            teacherSelect.prop('disabled', true);
-        }
-        $('#fachSelect').empty().append('<option value="">Wählen Sie Lehrer und Fach</option>').prop('disabled', true);
-    });
-
-    $('#teacherSelect').change(function() {
-        var subject = $('#subjectSelect').val();
-        var teacher = $(this).val();
-        var fachSelect = $('#fachSelect');
-        fachSelect.empty().append('<option value="">Wählen Sie Zeit und Raum</option>');
-        if (subject && teacher && slots[subject] && slots[subject][teacher]) {
-            slots[subject][teacher].forEach(function(slot) {
-                fachSelect.append('<option value="' + slot.id + '">' + slot.text + '</option>');
-            });
-            fachSelect.prop('disabled', false);
-        } else {
-            fachSelect.prop('disabled', true);
-        }
-    });
-});
-</script>
+{% if available_faecher %}
+<ul>
+  {% for fach in available_faecher %}
+  <li>
+    <strong>{{ fach.fachname }}</strong> - {{ fach.lehrer }} - {{ fach.tag }} {{ fach.startzeit }} - {{ fach.endzeit }} (Raum {{ fach.raum }})
+    <form method="post" style="display:inline;">
+      <input type="hidden" name="fach_id" value="{{ fach.id }}">
+      <button type="submit">Hinzufügen</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>Keine weiteren Fächer verfügbar.</p>
+{% endif %}
 
 {% endblock %}
