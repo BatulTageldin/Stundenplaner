@@ -59,6 +59,16 @@
         >
       </div>
 
+      {% if show_role %}
+      <div class="form-group">
+        <label for="role">Rolle</label>
+        <select class="form-control" name="role" required>
+          <option value="student">Schüler</option>
+          <option value="teacher">Lehrer</option>
+        </select>
+      </div>
+      {% endif %}
+
       <button type="submit" class="btn btn-primary btn-block">
         {{ button_label }}
       </button>

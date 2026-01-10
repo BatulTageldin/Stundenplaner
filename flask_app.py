@@ -84,7 +84,8 @@ def login():
         error=error,
         footer_text="Noch kein Konto?",
         footer_link_url=url_for("register"),
-        footer_link_label="Registrieren"
+        footer_link_label="Registrieren",
+        show_role=False
     )
 
 
@@ -98,8 +99,9 @@ def register():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+        role = request.form["role"]
 
-        ok = register_user(username, password)
+        ok = register_user(username, password, role)
         if ok:
             return redirect(url_for("login"))
 
@@ -113,7 +115,8 @@ def register():
         error=error,
         footer_text="Du hast bereits ein Konto?",
         footer_link_url=url_for("login"),
-        footer_link_label="Einloggen"
+        footer_link_label="Einloggen",
+        show_role=True
     )
 
 

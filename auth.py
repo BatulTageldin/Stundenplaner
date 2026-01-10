@@ -10,10 +10,11 @@ login_manager = LoginManager()
 
 
 class User(UserMixin):
-    def __init__(self, id, username, password):
+    def __init__(self, id, username, password, role):
         self.id = id
         self.username = username
         self.password = password
+        self.role = role
 
     @staticmethod
     def get_by_id(user_id):
@@ -30,7 +31,7 @@ class User(UserMixin):
             return None
 
         if row:
-            return User(row["id"], row["username"], row["password"])
+            return User(row["id"], row["username"], row["password"], row["role"])
         else:
             logger.warning("User.get_by_id(): kein User mit id=%s gefunden", user_id)
             return None
@@ -50,7 +51,7 @@ class User(UserMixin):
             return None
 
         if row:
-            return User(row["id"], row["username"], row["password"])
+            return User(row["id"], row["username"], row["password"], row["role"])
         else:
             logger.info("User.get_by_username(): kein User mit username=%s", username)
             return None
@@ -75,7 +76,7 @@ def load_user(user_id):
 
 
 # Helpers
-def register_user(username, password):
+def register_user(username, password, role):
     logger.info("register_user(): versuche neuen User '%s' anzulegen", username)
 
     existing = User.get_by_username(username)
@@ -86,8 +87,8 @@ def register_user(username, password):
     hashed = generate_password_hash(password)
     try:
         db_write(
-            "INSERT INTO users (username, password) VALUES (%s, %s)",
-            (username, hashed)
+            "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
+            (username, hashed, role)
         )
         logger.info("register_user(): User '%s' erfolgreich angelegt", username)
     except Exception:
