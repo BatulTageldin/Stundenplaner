@@ -25,6 +25,9 @@ CREATE TABLE faecher (
     fachname VARCHAR(100) NOT NULL,
     lehrer_id INT,
     raum_id INT,
+    tag VARCHAR(20),
+    startzeit TIME,
+    endzeit TIME,
     FOREIGN KEY (lehrer_id) REFERENCES lehrer(id),
     FOREIGN KEY (raum_id) REFERENCES raum(id)
 );
@@ -34,9 +37,6 @@ CREATE TABLE stundenplan (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     fach_id INT NOT NULL,
-    tag VARCHAR(20),
-    startzeit TIME,
-    endzeit TIME,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (fach_id) REFERENCES faecher(id)
 );

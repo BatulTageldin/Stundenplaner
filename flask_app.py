@@ -181,20 +181,26 @@ def add_lesson():
 
         # Fach speichern oder finden
         fach = db_read(
-            "SELECT id FROM faecher WHERE fachname=%s AND lehrer_id=%s AND raum_id=%s",
-            (subject, lehrer["id"], raum["id"]),
+            "SELECT id FROM faecher WHERE fachname=%s AND lehrer_id=%s AND raum_id=%s AND tag=%s AND startzeit=%s AND endzeit=%s",
+            (subject, lehrer["id"], raum["id"], tag, start, end),
             single=True
         )
         if not fach:
             db_write(
-                "INSERT INTO faecher (fachname, lehrer_id, raum_id) VALUES (%s,%s,%s)",
-                (subject, lehrer["id"], raum["id"])
+                "INSERT INTO faecher (fachname, lehrer_id, raum_id, tag, startzeit, endzeit) VALUES (%s,%s,%s,%s,%s,%s)",
+                (subject, lehrer["id"], raum["id"], tag, start, end)
             )
             fach = db_read(
-                "SELECT id FROM faecher WHERE fachname=%s AND lehrer_id=%s AND raum_id=%s",
-                (subject, lehrer["id"], raum["id"]),
+                "SELECT id FROM faecher WHERE fachname=%s AND lehrer_id=%s AND raum_id=%s AND tag=%s AND startzeit=%s AND endzeit=%s",
+                (subject, lehrer["id"], raum["id"], tag, start, end),
                 single=True
-            )    
+            )
+
+        # Stundenplan-Eintrag speichern
+        db_write(
+            "INSERT INTO stundenplan (user_id, fach_id) VALUES (%s,%s)",
+            (current_user.id, fach["id"])
+        )
 
         return redirect(url_for("week_view"))
 
@@ -237,23 +243,11 @@ def add_teacher():
 def add_schedule():
     if request.method == "POST":
         fach_id = request.form["fach"]
-        weekday = request.form["weekday"]
-        start, end = request.form["timeblock"].split("-")
-
-        # Wochentag von Zahl → Text
-        tage = {
-            "1": "Montag",
-            "2": "Dienstag",
-            "3": "Mittwoch",
-            "4": "Donnerstag",
-            "5": "Freitag"
-        }
-        tag = tage[weekday]
 
         # Stundenplan-Eintrag speichern
         db_write(
-            "INSERT INTO stundenplan (user_id, fach_id, tag, startzeit, endzeit) VALUES (%s,%s,%s,%s,%s)",
-            (current_user.id, fach_id, tag, start, end)
+            "INSERT INTO stundenplan (user_id, fach_id) VALUES (%s,%s)",
+            (current_user.id, fach_id)
         )
 
         return redirect(url_for("week_view"))
@@ -263,7 +257,10 @@ def add_schedule():
             faecher.id,
             faecher.fachname,
             lehrer.name AS lehrer,
-            raum.raumnummer AS raum
+            raum.raumnummer AS raum,
+            faecher.tag,
+            faecher.startzeit,
+            faecher.endzeit
         FROM faecher
         JOIN lehrer ON faecher.lehrer_id = lehrer.id
         JOIN raum ON faecher.raum_id = raum.id
@@ -280,9 +277,9 @@ def add_schedule():
 def week_view():
     eintraege = db_read("""
         SELECT 
-            stundenplan.tag,
-            stundenplan.startzeit,
-            stundenplan.endzeit,
+            faecher.tag,
+            faecher.startzeit,
+            faecher.endzeit,
             faecher.fachname,
             lehrer.name AS lehrer,
             raum.raumnummer AS raum
@@ -291,7 +288,7 @@ def week_view():
         JOIN lehrer ON faecher.lehrer_id = lehrer.id
         JOIN raum ON faecher.raum_id = raum.id
         WHERE stundenplan.user_id=%s
-        ORDER BY FIELD(stundenplan.tag, 'Montag','Dienstag','Mittwoch','Donnerstag','Freitag'), startzeit
+        ORDER BY FIELD(faecher.tag, 'Montag','Dienstag','Mittwoch','Donnerstag','Freitag'), faecher.startzeit
     """, (current_user.id,))
 
     # Struktur für Template
