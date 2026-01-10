@@ -35,8 +35,8 @@ $(document).ready(function() {
 
     // Populate teachers and slots
     faecher.forEach(function(f) {
-        if (!teachers[f.fachname]) teachers[f.fachname] = new Set();
-        teachers[f.fachname].add(f.lehrer);
+        if (!teachers[f.fachname]) teachers[f.fachname] = [];
+        if (teachers[f.fachname].indexOf(f.lehrer) === -1) teachers[f.fachname].push(f.lehrer);
 
         if (!slots[f.fachname]) slots[f.fachname] = {};
         if (!slots[f.fachname][f.lehrer]) slots[f.fachname][f.lehrer] = [];
