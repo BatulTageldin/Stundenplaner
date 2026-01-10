@@ -106,6 +106,10 @@ def register():
 
         ok = register_user(username, password, role)
         if ok:
+            user_id = ok  # now returns user_id
+            if role == 'teacher':
+                # Add to lehrer table
+                db_write("INSERT INTO lehrer (name, user_id) VALUES (%s, %s)", (username, user_id))
             return redirect(url_for("login"))
 
         error = "Benutzername existiert bereits."
@@ -141,7 +145,14 @@ def logout():
 def add_lesson():
     if request.method == "POST":
         subject = request.form["subject"]
-        lehrer_id = request.form["teacher"]
+        if current_user.role == 'teacher':
+            lehrer = db_read("SELECT id FROM lehrer WHERE user_id=%s", (current_user.id,), single=True)
+            if not lehrer:
+                # Error, but for now redirect
+                return redirect(url_for("teacher_week"))
+            lehrer_id = lehrer["id"]
+        else:
+            lehrer_id = request.form["teacher"]
         room_number = request.form.get("room", "unbekannt")
         weekday = request.form["weekday"]
         start, end = request.form["timeblock"].split("-")
@@ -190,8 +201,7 @@ def add_lesson():
 
         return redirect(url_for("week_view"))
 
-    lehrers = db_read("SELECT id, name FROM lehrer ORDER BY name") or []
-    return render_template("lesson.html", lehrers=lehrers)
+    return render_template("lesson.html")
 
 
 # -----------------------------
@@ -362,6 +372,13 @@ def teacher_week():
     if current_user.role != 'teacher':
         return redirect(url_for("week_view"))
 
+    # Get lehrer_id for current user
+    lehrer = db_read("SELECT id FROM lehrer WHERE user_id=%s", (current_user.id,), single=True)
+    if not lehrer:
+        # No lehrer entry, show empty
+        stundenplan = {tag: [] for tag in ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]}
+        return render_template("teacher_week.html", stundenplan=stundenplan)
+
     subjects = db_read("""
         SELECT 
             faecher.fachname,
@@ -373,8 +390,9 @@ def teacher_week():
         FROM faecher
         JOIN lehrer ON faecher.lehrer_id = lehrer.id
         JOIN raum ON faecher.raum_id = raum.id
+        WHERE faecher.lehrer_id = %s
         ORDER BY FIELD(faecher.tag, 'Montag','Dienstag','Mittwoch','Donnerstag','Freitag'), faecher.startzeit
-    """) or []
+    """, (lehrer["id"],)) or []
 
     # Struktur für Template
     wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]

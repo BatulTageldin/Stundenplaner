@@ -9,7 +9,9 @@ CREATE TABLE schueler (
 CREATE TABLE lehrer (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    email VARCHAR(100)
+    email VARCHAR(100),
+    user_id INT UNIQUE,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- Tabelle für Räume

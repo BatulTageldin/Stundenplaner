@@ -8,13 +8,6 @@
   <label>Fach:</label><br>
   <input type="text" name="subject" required><br><br>
 
-  <label>Lehrer:</label><br>
-  <select name="teacher" required>
-  {% for lehrer in lehrers %}
-      <option value={{lehrer.id}}>{{ lehrer.name }}</option>
-  {% endfor %}
-  </select><br><br>
-
   <label>Raum:</label><br>
   <input type="text" name="room" required><br><br>
 
