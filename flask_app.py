@@ -347,7 +347,7 @@ def week_view():
             "endzeit": str(e["endzeit"])[:5]
         })
 
-    return render_template("week.html", stundenplan=stundenplan)
+    return render_template("student_week.html", stundenplan=stundenplan)
 
 
 # -----------------------------

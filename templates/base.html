@@ -66,10 +66,13 @@
 
             {% if current_user.is_authenticated %}
 
+              {% if current_user.role == 'student' %}
               <li><a href="{{ url_for('week_view') }}">Stundenplan</a></li>
+              <li><a href="{{ url_for('add_schedule') }}">Fach zum Stundenplan</a></li>
+              {% elif current_user.role == 'teacher' %}
               <li><a href="{{ url_for('add_lesson') }}">Fach hinzufügen</a></li>
               <li><a href="{{ url_for('add_teacher') }}">Lehrer hinzufügen</a></li>
-              <li><a href="{{ url_for('add_schedule') }}">Fach zum Stundenplan</a></li>
+              {% endif %}
               <li><a href="{{ url_for('logout') }}">Logout</a></li>
 
             {% else %}
