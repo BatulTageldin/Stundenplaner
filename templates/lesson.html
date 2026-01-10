@@ -9,10 +9,7 @@
   <input type="text" name="subject" required><br><br>
 
   <label>Lehrer:</label><br>
-  <input type="text" name="teacher" required><br><br>
-
-  <label>Lehrer:</label><br>
-  <select name="teacher1" required>
+  <select name="teacher" required>
   {% for lehrer in lehrers %}
       <option value={{lehrer.id}}>{{ lehrer.name }}</option>
   {% endfor %}
