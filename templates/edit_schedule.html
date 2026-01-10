@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Fach im Stundenplan bearbeiten</h2>
+
+<form method="post">
+
+  <label>Fach:</label><br>
+  <select name="fach" required>
+    {% for fach in faecher %}
+      <option value="{{ fach.id }}" {% if fach.id == current_fach_id %}selected{% endif %}>{{ fach.fachname }} ({{ fach.lehrer }}, {{ fach.raum }}, {{ fach.tag }} {{ fach.startzeit }} - {{ fach.endzeit }})</option>
+    {% endfor %}
+  </select><br><br>
+
+  <button type="submit">Aktualisieren</button>
+
+</form>
+{% endblock %}

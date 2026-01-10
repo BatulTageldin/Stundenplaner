@@ -268,6 +268,44 @@ def delete_schedule(stundenplan_id):
 
 
 # -----------------------------
+# STUNDENPLAN EINTRAG BEARBEITEN
+# -----------------------------
+@app.route("/schedule/edit/<int:stundenplan_id>", methods=["GET", "POST"])
+@login_required
+def edit_schedule(stundenplan_id):
+    # Ensure the entry belongs to the current user
+    entry = db_read(
+        "SELECT id, fach_id FROM stundenplan WHERE id=%s AND user_id=%s",
+        (stundenplan_id, current_user.id),
+        single=True
+    )
+    if not entry:
+        return redirect(url_for("week_view"))
+
+    if request.method == "POST":
+        new_fach_id = request.form["fach"]
+        db_write("UPDATE stundenplan SET fach_id=%s WHERE id=%s", (new_fach_id, stundenplan_id))
+        return redirect(url_for("week_view"))
+
+    faecher = db_read("""
+        SELECT 
+            faecher.id,
+            faecher.fachname,
+            lehrer.name AS lehrer,
+            raum.raumnummer AS raum,
+            faecher.tag,
+            faecher.startzeit,
+            faecher.endzeit
+        FROM faecher
+        JOIN lehrer ON faecher.lehrer_id = lehrer.id
+        JOIN raum ON faecher.raum_id = raum.id
+        ORDER BY faecher.fachname
+    """) or []
+
+    return render_template("edit_schedule.html", faecher=faecher, current_fach_id=entry["fach_id"])
+
+
+# -----------------------------
 # STUNDENPLAN ANZEIGEN
 # -----------------------------
 @app.route("/week")
