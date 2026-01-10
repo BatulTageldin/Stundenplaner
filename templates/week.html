@@ -28,6 +28,9 @@
         Lehrer: {{ e.lehrer }}<br>
         Raum: {{ e.raum }}<br>
         Zeit: {{ e.startzeit }} – {{ e.endzeit }}
+        <form method="post" action="{{ url_for('delete_schedule', stundenplan_id=e.stundenplan_id) }}" style="display: inline;">
+          <button type="submit" style="margin-left: 10px; background: #d9534f; color: white; border: none; padding: 5px 10px; border-radius: 4px;">Löschen</button>
+        </form>
       </div>
     {% endfor %}
   {% else %}

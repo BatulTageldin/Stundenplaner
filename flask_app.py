@@ -250,6 +250,24 @@ def add_schedule():
 
 
 # -----------------------------
+# STUNDENPLAN EINTRAG LÖSCHEN
+# -----------------------------
+@app.route("/schedule/delete/<int:stundenplan_id>", methods=["POST"])
+@login_required
+def delete_schedule(stundenplan_id):
+    # Ensure the entry belongs to the current user
+    entry = db_read(
+        "SELECT id FROM stundenplan WHERE id=%s AND user_id=%s",
+        (stundenplan_id, current_user.id),
+        single=True
+    )
+    if entry:
+        db_write("DELETE FROM stundenplan WHERE id=%s", (stundenplan_id,))
+    
+    return redirect(url_for("week_view"))
+
+
+# -----------------------------
 # STUNDENPLAN ANZEIGEN
 # -----------------------------
 @app.route("/week")
@@ -257,6 +275,7 @@ def add_schedule():
 def week_view():
     eintraege = db_read("""
         SELECT 
+            stundenplan.id AS stundenplan_id,
             faecher.tag,
             faecher.startzeit,
             faecher.endzeit,
@@ -277,6 +296,7 @@ def week_view():
 
     for e in eintraege:
         stundenplan[e["tag"]].append({
+            "stundenplan_id": e["stundenplan_id"],
             "fachname": e["fachname"],
             "lehrer": e["lehrer"],
             "raum": e["raum"],
