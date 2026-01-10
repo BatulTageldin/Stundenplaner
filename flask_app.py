@@ -145,6 +145,8 @@ def logout():
 def add_lesson():
     if request.method == "POST":
         subject = request.form["subject"]
+
+
         if current_user.role == 'teacher':
             lehrer = db_read("SELECT id FROM lehrer WHERE user_id=%s", (current_user.id,), single=True)
             if not lehrer:
@@ -199,7 +201,7 @@ def add_lesson():
                 single=True
             )
 
-        return redirect(url_for("week_view"))
+        return redirect(url_for("teacher_week"))
 
     return render_template("lesson.html")
 
