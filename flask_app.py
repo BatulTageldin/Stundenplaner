@@ -209,6 +209,33 @@ def add_lesson():
 
 
 # -----------------------------
+# LEHRER HINZUFÜGEN
+# -----------------------------
+@app.route("/teacher/add", methods=["GET", "POST"])
+@login_required
+def add_teacher():
+    if request.method == "POST":
+        name = request.form["name"]
+
+        # Check if teacher already exists
+        existing = db_read(
+            "SELECT id FROM lehrer WHERE name=%s",
+            (name,),
+            single=True
+        )
+        if existing:
+            # Maybe add error handling, but for now just redirect
+            return redirect(url_for("week_view"))
+
+        # Insert new teacher
+        db_write("INSERT INTO lehrer (name) VALUES (%s)", (name,))
+
+        return redirect(url_for("week_view"))
+
+    return render_template("teacher.html")
+
+
+# -----------------------------
 # STUNDENPLAN ANZEIGEN
 # -----------------------------
 @app.route("/week")
