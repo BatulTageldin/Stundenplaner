@@ -11,16 +11,28 @@
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.06);
   }
+  .weekday-title {
+    margin-top: 30px;
+    font-size: 22px;
+    font-weight: 600;
+  }
 </style>
 
-{% for subject in subjects %}
-  <div class="subject-card">
-    <strong>{{ subject.fachname }}</strong><br>
-    Lehrer: {{ subject.lehrer }}<br>
-    Raum: {{ subject.raum }}<br>
-    Tag: {{ subject.tag }}<br>
-    Zeit: {{ subject.startzeit }} – {{ subject.endzeit }}
-  </div>
+{% for tag, subjects in stundenplan.items() %}
+  <h3 class="weekday-title">{{ tag }}</h3>
+
+  {% if subjects %}
+    {% for subject in subjects %}
+      <div class="subject-card">
+        <strong>{{ subject.fachname }}</strong><br>
+        Lehrer: {{ subject.lehrer }}<br>
+        Raum: {{ subject.raum }}<br>
+        Zeit: {{ subject.startzeit }} – {{ subject.endzeit }}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>Keine Fächer</p>
+  {% endif %}
 {% endfor %}
 
 {% endblock %}

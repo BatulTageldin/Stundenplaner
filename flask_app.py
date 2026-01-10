@@ -75,7 +75,7 @@ def login():
 
         if user:
             login_user(user)
-            return redirect(url_for("week_view"))
+            return redirect(url_for("index"))
 
         error = "Benutzername oder Passwort ist falsch."
 
@@ -373,10 +373,23 @@ def teacher_week():
         FROM faecher
         JOIN lehrer ON faecher.lehrer_id = lehrer.id
         JOIN raum ON faecher.raum_id = raum.id
-        ORDER BY faecher.fachname
+        ORDER BY FIELD(faecher.tag, 'Montag','Dienstag','Mittwoch','Donnerstag','Freitag'), faecher.startzeit
     """) or []
 
-    return render_template("teacher_week.html", subjects=subjects)
+    # Struktur für Template
+    wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
+    stundenplan = {tag: [] for tag in wochentage}
+
+    for s in subjects:
+        stundenplan[s["tag"]].append({
+            "fachname": s["fachname"],
+            "lehrer": s["lehrer"],
+            "raum": s["raum"],
+            "startzeit": str(s["startzeit"])[:5],
+            "endzeit": str(s["endzeit"])[:5]
+        })
+
+    return render_template("teacher_week.html", stundenplan=stundenplan)
 
 
 # -----------------------------
