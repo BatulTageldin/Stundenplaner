@@ -194,13 +194,7 @@ def add_lesson():
                 "SELECT id FROM faecher WHERE fachname=%s AND lehrer_id=%s AND raum_id=%s",
                 (subject, lehrer["id"], raum["id"]),
                 single=True
-            )
-
-        # Stundenplan-Eintrag speichern
-        db_write(
-            "INSERT INTO stundenplan (user_id, fach_id, tag, startzeit, endzeit) VALUES (%s,%s,%s,%s,%s)",
-            (current_user.id, fach["id"], tag, start, end)
-        )
+            )    
 
         return redirect(url_for("week_view"))
 
