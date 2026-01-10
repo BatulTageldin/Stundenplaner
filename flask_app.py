@@ -196,12 +196,6 @@ def add_lesson():
                 single=True
             )
 
-        # Stundenplan-Eintrag speichern
-        db_write(
-            "INSERT INTO stundenplan (user_id, fach_id) VALUES (%s,%s)",
-            (current_user.id, fach["id"])
-        )
-
         return redirect(url_for("week_view"))
 
     lehrers = db_read("SELECT id, name FROM lehrer ORDER BY name") or []
