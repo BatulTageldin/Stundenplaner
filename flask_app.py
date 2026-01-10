@@ -263,7 +263,12 @@ def add_schedule():
         JOIN raum ON faecher.raum_id = raum.id
         ORDER BY faecher.fachname
     """) or []
-    return render_template("schedule.html", faecher=faecher)
+
+    # Get distinct subjects
+    subjects = list(set(f['fachname'] for f in faecher))
+    subjects.sort()
+
+    return render_template("schedule.html", faecher=faecher, subjects=subjects)
 
 
 # -----------------------------
