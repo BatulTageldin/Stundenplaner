@@ -624,12 +624,14 @@ def pluspunkte():
     return render_template("pluspunkte.html", subjects=subjects, saved_data=saved_data)
 
 
-# -----------------------------# PLUSPUNKTE SPEICHERN
+# -----------------------------
+# PLUSPUNKTE SPEICHERN
 # -----------------------------
 @app.route("/pluspunkte/save", methods=["POST"])
 @login_required
 def save_pluspunkte():
     if current_user.role != 'student':
+        print("ERROR: User is not a student")
         return {'success': False, 'error': 'Unauthorized'}, 403
     
     try:
@@ -640,6 +642,12 @@ def save_pluspunkte():
         fach_gewichtung = data.get('fach_gewichtung', 1.0)
         pruefungen = data.get('pruefungen', [])
         
+        print(f"\n=== SAVE PLUSPUNKTE DEBUG ===")
+        print(f"User ID: {current_user.id}")
+        print(f"Fachname: {fachname}")
+        print(f"Fach-Gewichtung: {fach_gewichtung}")
+        print(f"Prüfungen: {pruefungen}")
+        
         # Save or update Fach-Gewichtung
         existing = db_read(
             "SELECT id FROM fach_gewichtungen WHERE user_id=%s AND fachname=%s",
@@ -648,28 +656,37 @@ def save_pluspunkte():
         )
         
         if existing:
+            print(f"Updating existing fach_gewichtung ID: {existing['id']}")
             db_write(
                 "UPDATE fach_gewichtungen SET gewichtung=%s WHERE id=%s",
                 (fach_gewichtung, existing['id'])
             )
         else:
+            print("Inserting new fach_gewichtung")
             db_write(
                 "INSERT INTO fach_gewichtungen (user_id, fachname, gewichtung) VALUES (%s, %s, %s)",
                 (current_user.id, fachname, fach_gewichtung)
             )
         
         # Delete old Prüfungen for this subject
+        print(f"Deleting old pruefungen for {fachname}")
         db_write("DELETE FROM pruefungen WHERE user_id=%s AND fachname=%s", (current_user.id, fachname))
         
         # Insert new Prüfungen
-        for pruefung in pruefungen:
+        print(f"Inserting {len(pruefungen)} new pruefungen")
+        for i, pruefung in enumerate(pruefungen):
+            print(f"  Prüfung {i+1}: Note={pruefung['note']}, Gewichtung={pruefung['gewichtung']}")
             db_write(
                 "INSERT INTO pruefungen (user_id, fachname, note, gewichtung) VALUES (%s, %s, %s, %s)",
                 (current_user.id, fachname, pruefung['note'], pruefung['gewichtung'])
             )
         
+        print("Save successful!")
         return {'success': True}
     except Exception as e:
+        print(f"ERROR saving pluspunkte: {e}")
+        import traceback
+        print(traceback.format_exc())
         logging.error(f"Error saving pluspunkte: {e}")
         return {'success': False, 'error': str(e)}, 500
 
