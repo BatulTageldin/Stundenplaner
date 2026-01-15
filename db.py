@@ -11,8 +11,8 @@ DB_CONFIG = {
     "database": os.getenv("DB_DATABASE")
 }
 
-# Init db
-pool = pooling.MySQLConnectionPool(pool_name="pool", pool_size=5, **DB_CONFIG)
+# Init db - reduced pool_size for PythonAnywhere free tier (max 6 connections)
+pool = pooling.MySQLConnectionPool(pool_name="pool", pool_size=2, **DB_CONFIG)
 def get_conn():
     return pool.get_connection()
 
