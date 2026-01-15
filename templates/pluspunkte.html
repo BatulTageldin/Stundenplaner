@@ -222,6 +222,25 @@
         Fachnote: <span class="fachnote-value">4.00</span> → 
         Pluspunkte: <span class="subject-points">0.00</span>
       </div>
+      
+      <!-- Was brauche ich noch? Calculator -->
+      <div class="goal-calculator" style="margin-top: 15px; padding: 15px; background: rgba(52, 152, 219, 0.1); border-radius: 4px; border-left: 3px solid #3498db;">
+        <div style="font-weight: 600; margin-bottom: 10px; color: var(--text-primary);">📊 Was brauche ich noch?</div>
+        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 150px;">
+            <label style="font-size: 12px; color: var(--text-secondary);">Ziel-Fachnote:</label>
+            <input type="number" class="goal-note-input" placeholder="z.B. 5.0" step="0.5" min="1" max="6" style="width: 100%; padding: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); border-radius: 4px;">
+          </div>
+          <div style="flex: 1; min-width: 150px;">
+            <label style="font-size: 12px; color: var(--text-secondary);">Gewichtung nächste Prüfung:</label>
+            <input type="number" class="next-exam-weight-input" value="1" step="0.5" min="0.5" style="width: 100%; padding: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); border-radius: 4px;">
+          </div>
+          <button onclick="calculateNeededGrade(this)" style="padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">Berechnen</button>
+        </div>
+        <div class="goal-result" style="margin-top: 10px; padding: 10px; background: var(--bg-secondary); border-radius: 4px; display: none;">
+          <!-- Result will be shown here -->
+        </div>
+      </div>
     `;
 
     // Load saved exams if they exist
@@ -436,6 +455,75 @@
         console.error('Auto-save error:', error);
       }
     }, 1000);
+  }
+  
+  function calculateNeededGrade(button) {
+    const subjectDiv = button.closest('.subject-item');
+    const goalNoteInput = subjectDiv.querySelector('.goal-note-input');
+    const nextExamWeightInput = subjectDiv.querySelector('.next-exam-weight-input');
+    const goalResult = subjectDiv.querySelector('.goal-result');
+    
+    const goalNote = parseFloat(goalNoteInput.value);
+    const nextExamWeight = parseFloat(nextExamWeightInput.value);
+    
+    if (isNaN(goalNote) || goalNote < 1 || goalNote > 6) {
+      alert('Bitte gib eine gültige Ziel-Fachnote zwischen 1.0 und 6.0 ein.');
+      return;
+    }
+    
+    if (isNaN(nextExamWeight) || nextExamWeight <= 0) {
+      alert('Bitte gib eine gültige Gewichtung ein.');
+      return;
+    }
+    
+    // Get current exams
+    const examRows = subjectDiv.querySelectorAll('.exam-row');
+    let currentWeightedSum = 0;
+    let currentTotalWeight = 0;
+    
+    examRows.forEach(examRow => {
+      const grade = parseFloat(examRow.querySelector('.grade-input').value) || 4.0;
+      const weight = parseFloat(examRow.querySelector('.exam-weight-input').value) || 1.0;
+      
+      currentWeightedSum += grade * weight;
+      currentTotalWeight += weight;
+    });
+    
+    // Calculate needed grade
+    // Formula: goalNote = (currentWeightedSum + neededGrade * nextExamWeight) / (currentTotalWeight + nextExamWeight)
+    // Solve for neededGrade: neededGrade = (goalNote * (currentTotalWeight + nextExamWeight) - currentWeightedSum) / nextExamWeight
+    
+    const neededGrade = (goalNote * (currentTotalWeight + nextExamWeight) - currentWeightedSum) / nextExamWeight;
+    
+    // Display result
+    goalResult.style.display = 'block';
+    
+    let resultHTML = '';
+    let resultClass = '';
+    
+    if (neededGrade < 1.0) {
+      resultClass = 'success';
+      resultHTML = `<strong style="color: #155724;">🎉 Ziel bereits erreicht!</strong><br>
+        Du hast aktuell eine Fachnote von <strong>${(currentWeightedSum / currentTotalWeight).toFixed(2)}</strong>. 
+        Du kannst sogar eine schlechtere Note bekommen und erreichst trotzdem dein Ziel von <strong>${goalNote.toFixed(1)}</strong>!`;
+    } else if (neededGrade > 6.0) {
+      resultClass = 'error';
+      const maxPossible = (currentWeightedSum + 6.0 * nextExamWeight) / (currentTotalWeight + nextExamWeight);
+      resultHTML = `<strong style="color: #721c24;">⚠️ Ziel nicht mehr erreichbar</strong><br>
+        Selbst mit einer Note von <strong>6.0</strong> in der nächsten Prüfung erreichst du nur eine Fachnote von <strong>${maxPossible.toFixed(2)}</strong>.`;
+    } else if (neededGrade >= 5.5) {
+      resultClass = 'warning';
+      resultHTML = `<strong style="color: #856404;">📚 Sehr anspruchsvoll</strong><br>
+        Du brauchst mindestens eine <strong>${neededGrade.toFixed(2)}</strong> in der nächsten Prüfung 
+        (Gewichtung: ${nextExamWeight}) um eine Fachnote von <strong>${goalNote.toFixed(1)}</strong> zu erreichen.`;
+    } else {
+      resultClass = 'success';
+      resultHTML = `<strong style="color: #155724;">✅ Erreichbar</strong><br>
+        Du brauchst mindestens eine <strong>${neededGrade.toFixed(2)}</strong> in der nächsten Prüfung 
+        (Gewichtung: ${nextExamWeight}) um eine Fachnote von <strong>${goalNote.toFixed(1)}</strong> zu erreichen.`;
+    }
+    
+    goalResult.innerHTML = resultHTML;
   }
 </script>
 

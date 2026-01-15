@@ -675,58 +675,6 @@ def save_pluspunkte():
 
 
 # -----------------------------
-# ZIELRECHNER - Was brauche ich noch?
-# -----------------------------
-@app.route("/zielrechner")
-@login_required
-def zielrechner():
-    if current_user.role != 'student':
-        return redirect(url_for("teacher_week"))
-    
-    # Get all unique subjects from the student's schedule
-    subjects = db_read("""
-        SELECT DISTINCT faecher.fachname
-        FROM stundenplan
-        JOIN faecher ON stundenplan.fach_id = faecher.id
-        WHERE stundenplan.user_id = %s
-        ORDER BY faecher.fachname
-    """, (current_user.id,)) or []
-    
-    # Load saved data
-    saved_data = {}
-    try:
-        for subject in subjects:
-            fachname = subject['fachname']
-            
-            # Get Fach-Gewichtung
-            gewichtung = db_read(
-                "SELECT gewichtung FROM fach_gewichtungen WHERE user_id=%s AND fachname=%s",
-                (current_user.id, fachname),
-                single=True
-            )
-            
-            # Get all Prüfungen for this subject
-            pruefungen = db_read(
-                "SELECT id, note, gewichtung FROM pruefungen WHERE user_id=%s AND fachname=%s ORDER BY id",
-                (current_user.id, fachname)
-            ) or []
-            
-            saved_data[fachname] = {
-                'fach_gewichtung': float(gewichtung['gewichtung']) if gewichtung else 1.0,
-                'pruefungen': [{'note': float(p['note']), 'gewichtung': float(p['gewichtung'])} for p in pruefungen]
-            }
-    except Exception as e:
-        logging.error(f"Error loading zielrechner data: {e}")
-        for subject in subjects:
-            saved_data[subject['fachname']] = {
-                'fach_gewichtung': 1.0,
-                'pruefungen': []
-            }
-    
-    return render_template("zielrechner.html", subjects=subjects, saved_data=saved_data)
-
-
-# -----------------------------
 # START APP
 # -----------------------------
 if __name__ == "__main__":
