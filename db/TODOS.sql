@@ -54,4 +54,25 @@ CREATE TABLE users (
     username VARCHAR(250) NOT NULL UNIQUE,
     password VARCHAR(250) NOT NULL,
     role VARCHAR(20) NOT NULL
-)
+);
+
+-- Tabelle für Fach-Gewichtungen (Pluspunkte)
+CREATE TABLE fach_gewichtungen (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    fachname VARCHAR(100) NOT NULL,
+    gewichtung DECIMAL(3,1) DEFAULT 1.0,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_fach (user_id, fachname)
+);
+
+-- Tabelle für Prüfungen (Pluspunkte)
+CREATE TABLE pruefungen (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    fachname VARCHAR(100) NOT NULL,
+    note DECIMAL(3,2) NOT NULL,
+    gewichtung DECIMAL(3,1) DEFAULT 1.0,
+    erstellt_am TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
