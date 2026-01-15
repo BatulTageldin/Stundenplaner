@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Meine To-Do-Liste</h2>
+
+<style>
+  .todo-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .add-todo-form {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    margin-bottom: 30px;
+  }
+  
+  .add-todo-form h3 {
+    color: var(--text-primary);
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+  
+  .form-row {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+  }
+  
+  .form-group {
+    flex: 1;
+  }
+  
+  .form-group label {
+    display: block;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-radius: 4px;
+    font-size: 15px;
+    box-sizing: border-box;
+  }
+  
+  .add-btn {
+    padding: 10px 20px;
+    background: #5cb85c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  .add-btn:hover {
+    background: #4cae4c;
+  }
+  
+  .todos-section {
+    background: var(--bg-secondary);
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+  }
+  
+  .todos-section h3 {
+    color: var(--text-primary);
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 18px;
+  }
+  
+  .todo-item {
+    background: var(--bg-primary);
+    padding: 15px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    border-left: 4px solid #5cb85c;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.2s;
+  }
+  
+  .todo-item.completed {
+    opacity: 0.6;
+    border-left-color: #999;
+  }
+  
+  .todo-checkbox {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: #5cb85c;
+  }
+  
+  .todo-content {
+    flex: 1;
+  }
+  
+  .todo-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+  }
+  
+  .todo-item.completed .todo-title {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+  }
+  
+  .todo-date {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  
+  .todo-date.overdue {
+    color: #dc3545;
+    font-weight: 600;
+  }
+  
+  .todo-date.today {
+    color: #f0ad4e;
+    font-weight: 600;
+  }
+  
+  .todo-date.upcoming {
+    color: #5cb85c;
+  }
+  
+  .delete-btn {
+    padding: 6px 12px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  
+  .delete-btn:hover {
+    background: #c82333;
+  }
+  
+  .no-todos {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+  }
+  
+  .no-todos h4 {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+  
+  @media (max-width: 768px) {
+    .form-row {
+      flex-direction: column;
+    }
+    
+    .add-btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="todo-container">
+  <div class="add-todo-form">
+    <h3>➕ Neue Aufgabe hinzufügen</h3>
+    <form method="post" action="{{ url_for('add_todo') }}">
+      <div class="form-row">
+        <div class="form-group" style="flex: 2;">
+          <label for="titel">Aufgabe:</label>
+          <input 
+            type="text" 
+            id="titel" 
+            name="titel" 
+            class="form-control" 
+            placeholder="z.B. Mathe-Hausaufgaben machen"
+            required
+            autofocus
+          >
+        </div>
+        <div class="form-group">
+          <label for="faelligkeitsdatum">Fälligkeitsdatum (optional):</label>
+          <input 
+            type="date" 
+            id="faelligkeitsdatum" 
+            name="faelligkeitsdatum" 
+            class="form-control"
+          >
+        </div>
+        <button type="submit" class="add-btn">Hinzufügen</button>
+      </div>
+    </form>
+  </div>
+  
+  <div class="todos-section">
+    <h3>📋 Meine Aufgaben ({{ todos|length }})</h3>
+    
+    {% if todos %}
+      {% for todo in todos %}
+      <div class="todo-item {% if todo.erledigt %}completed{% endif %}">
+        <form method="post" action="{{ url_for('toggle_todo', todo_id=todo.id) }}" style="margin: 0;">
+          <input 
+            type="checkbox" 
+            class="todo-checkbox" 
+            {% if todo.erledigt %}checked{% endif %}
+            onchange="this.form.submit()"
+          >
+        </form>
+        
+        <div class="todo-content">
+          <div class="todo-title">{{ todo.titel }}</div>
+          {% if todo.faelligkeitsdatum %}
+            {% set today = now().date() %}
+            {% set due_date = todo.faelligkeitsdatum %}
+            {% if due_date < today and not todo.erledigt %}
+              <div class="todo-date overdue">
+                ⚠️ Überfällig: {{ todo.faelligkeitsdatum.strftime('%d.%m.%Y') }}
+              </div>
+            {% elif due_date == today and not todo.erledigt %}
+              <div class="todo-date today">
+                📅 Heute fällig
+              </div>
+            {% else %}
+              <div class="todo-date {% if not todo.erledigt %}upcoming{% endif %}">
+                📅 Fällig: {{ todo.faelligkeitsdatum.strftime('%d.%m.%Y') }}
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+        
+        <form method="post" action="{{ url_for('delete_todo', todo_id=todo.id) }}" style="margin: 0;">
+          <button type="submit" class="delete-btn" onclick="return confirm('Aufgabe wirklich löschen?')">
+            🗑️
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="no-todos">
+        <h4>Keine Aufgaben vorhanden</h4>
+        <p>Füge oben deine erste Aufgabe hinzu!</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

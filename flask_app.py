@@ -675,6 +675,76 @@ def save_pluspunkte():
 
 
 # -----------------------------
+# TO-DO LISTE
+# -----------------------------
+@app.route("/todos")
+@login_required
+def todos():
+    # Get all todos for current user, sorted by: uncompleted first, then by due date
+    all_todos = db_read("""
+        SELECT id, titel, erledigt, faelligkeitsdatum, erstellt_am
+        FROM todos
+        WHERE user_id = %s
+        ORDER BY erledigt ASC, faelligkeitsdatum ASC, erstellt_am DESC
+    """, (current_user.id,)) or []
+    
+    return render_template("todos.html", todos=all_todos)
+
+
+@app.route("/todos/add", methods=["POST"])
+@login_required
+def add_todo():
+    titel = request.form.get("titel", "").strip()
+    faelligkeitsdatum = request.form.get("faelligkeitsdatum", None)
+    
+    if not titel:
+        return redirect(url_for("todos"))
+    
+    # Convert empty string to None for SQL
+    if faelligkeitsdatum == "":
+        faelligkeitsdatum = None
+    
+    db_write(
+        "INSERT INTO todos (user_id, titel, faelligkeitsdatum) VALUES (%s, %s, %s)",
+        (current_user.id, titel, faelligkeitsdatum)
+    )
+    
+    return redirect(url_for("todos"))
+
+
+@app.route("/todos/toggle/<int:todo_id>", methods=["POST"])
+@login_required
+def toggle_todo(todo_id):
+    # Verify todo belongs to current user
+    todo = db_read(
+        "SELECT id, erledigt FROM todos WHERE id=%s AND user_id=%s",
+        (todo_id, current_user.id),
+        single=True
+    )
+    
+    if todo:
+        new_status = not todo["erledigt"]
+        db_write(
+            "UPDATE todos SET erledigt=%s WHERE id=%s",
+            (new_status, todo_id)
+        )
+    
+    return redirect(url_for("todos"))
+
+
+@app.route("/todos/delete/<int:todo_id>", methods=["POST"])
+@login_required
+def delete_todo(todo_id):
+    # Verify todo belongs to current user
+    db_write(
+        "DELETE FROM todos WHERE id=%s AND user_id=%s",
+        (todo_id, current_user.id)
+    )
+    
+    return redirect(url_for("todos"))
+
+
+# -----------------------------
 # START APP
 # -----------------------------
 if __name__ == "__main__":
