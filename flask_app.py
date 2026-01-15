@@ -590,7 +590,77 @@ def pluspunkte():
         ORDER BY faecher.fachname
     """, (current_user.id,)) or []
     
-    return render_template("pluspunkte.html", subjects=subjects)
+    # Load saved data
+    saved_data = {}
+    for subject in subjects:
+        fachname = subject['fachname']
+        
+        # Get Fach-Gewichtung
+        gewichtung = db_read(
+            "SELECT gewichtung FROM fach_gewichtungen WHERE user_id=%s AND fachname=%s",
+            (current_user.id, fachname),
+            single=True
+        )
+        
+        # Get all Prüfungen for this subject
+        pruefungen = db_read(
+            "SELECT id, note, gewichtung FROM pruefungen WHERE user_id=%s AND fachname=%s ORDER BY id",
+            (current_user.id, fachname)
+        ) or []
+        
+        saved_data[fachname] = {
+            'fach_gewichtung': gewichtung['gewichtung'] if gewichtung else 1.0,
+            'pruefungen': pruefungen
+        }
+    
+    return render_template("pluspunkte.html", subjects=subjects, saved_data=saved_data)
+
+
+# -----------------------------
+# PLUSPUNKTE SPEICHERN
+# -----------------------------
+@app.route("/pluspunkte/save", methods=["POST"])
+@login_required
+def save_pluspunkte():
+    if current_user.role != 'student':
+        return redirect(url_for("teacher_week"))
+    
+    import json
+    data = json.loads(request.data)
+    
+    fachname = data.get('fachname')
+    fach_gewichtung = data.get('fach_gewichtung', 1.0)
+    pruefungen = data.get('pruefungen', [])
+    
+    # Save or update Fach-Gewichtung
+    existing = db_read(
+        "SELECT id FROM fach_gewichtungen WHERE user_id=%s AND fachname=%s",
+        (current_user.id, fachname),
+        single=True
+    )
+    
+    if existing:
+        db_write(
+            "UPDATE fach_gewichtungen SET gewichtung=%s WHERE id=%s",
+            (fach_gewichtung, existing['id'])
+        )
+    else:
+        db_write(
+            "INSERT INTO fach_gewichtungen (user_id, fachname, gewichtung) VALUES (%s, %s, %s)",
+            (current_user.id, fachname, fach_gewichtung)
+        )
+    
+    # Delete old Prüfungen for this subject
+    db_write("DELETE FROM pruefungen WHERE user_id=%s AND fachname=%s", (current_user.id, fachname))
+    
+    # Insert new Prüfungen
+    for pruefung in pruefungen:
+        db_write(
+            "INSERT INTO pruefungen (user_id, fachname, note, gewichtung) VALUES (%s, %s, %s, %s)",
+            (current_user.id, fachname, pruefung['note'], pruefung['gewichtung'])
+        )
+    
+    return {'success': True}
 
 
 # -----------------------------
