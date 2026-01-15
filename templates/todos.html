@@ -227,7 +227,6 @@
         <div class="todo-content">
           <div class="todo-title">{{ todo.titel }}</div>
           {% if todo.faelligkeitsdatum %}
-            {% set today = now().date() %}
             {% set due_date = todo.faelligkeitsdatum %}
             {% if due_date < today and not todo.erledigt %}
               <div class="todo-date overdue">

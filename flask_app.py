@@ -680,6 +680,8 @@ def save_pluspunkte():
 @app.route("/todos")
 @login_required
 def todos():
+    from datetime import date
+    
     # Get all todos for current user, sorted by: uncompleted first, then by due date
     all_todos = db_read("""
         SELECT id, titel, erledigt, faelligkeitsdatum, erstellt_am
@@ -688,7 +690,9 @@ def todos():
         ORDER BY erledigt ASC, faelligkeitsdatum ASC, erstellt_am DESC
     """, (current_user.id,)) or []
     
-    return render_template("todos.html", todos=all_todos)
+    today = date.today()
+    
+    return render_template("todos.html", todos=all_todos, today=today)
 
 
 @app.route("/todos/add", methods=["POST"])
