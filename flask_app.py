@@ -682,13 +682,17 @@ def save_pluspunkte():
 def todos():
     from datetime import date
     
-    # Get all todos for current user, sorted by: uncompleted first, then by due date
-    all_todos = db_read("""
-        SELECT id, title, completed, due_date, created_at
-        FROM todos
-        WHERE user_id = %s
-        ORDER BY completed ASC, due_date ASC, created_at DESC
-    """, (current_user.id,)) or []
+    try:
+        # Get all todos for current user, sorted by: uncompleted first, then by due date
+        all_todos = db_read("""
+            SELECT id, title, completed, due_date, created_at
+            FROM todos
+            WHERE user_id = %s
+            ORDER BY completed ASC, due_date ASC, created_at DESC
+        """, (current_user.id,)) or []
+    except Exception as e:
+        logging.error(f"Error loading todos: {e}")
+        all_todos = []
     
     today = date.today()
     
@@ -708,10 +712,13 @@ def add_todo():
     if due_date == "":
         due_date = None
     
-    db_write(
-        "INSERT INTO todos (user_id, title, due_date) VALUES (%s, %s, %s)",
-        (current_user.id, title, due_date)
-    )
+    try:
+        db_write(
+            "INSERT INTO todos (user_id, title, due_date) VALUES (%s, %s, %s)",
+            (current_user.id, title, due_date)
+        )
+    except Exception as e:
+        logging.error(f"Error adding todo: {e}")
     
     return redirect(url_for("todos"))
 
@@ -719,19 +726,22 @@ def add_todo():
 @app.route("/todos/toggle/<int:todo_id>", methods=["POST"])
 @login_required
 def toggle_todo(todo_id):
-    # Verify todo belongs to current user
-    todo = db_read(
-        "SELECT id, completed FROM todos WHERE id=%s AND user_id=%s",
-        (todo_id, current_user.id),
-        single=True
-    )
-    
-    if todo:
-        new_status = not todo["completed"]
-        db_write(
-            "UPDATE todos SET completed=%s WHERE id=%s",
-            (new_status, todo_id)
+    try:
+        # Verify todo belongs to current user
+        todo = db_read(
+            "SELECT id, completed FROM todos WHERE id=%s AND user_id=%s",
+            (todo_id, current_user.id),
+            single=True
         )
+        
+        if todo:
+            new_status = not todo["completed"]
+            db_write(
+                "UPDATE todos SET completed=%s WHERE id=%s",
+                (new_status, todo_id)
+            )
+    except Exception as e:
+        logging.error(f"Error toggling todo: {e}")
     
     return redirect(url_for("todos"))
 
@@ -739,11 +749,14 @@ def toggle_todo(todo_id):
 @app.route("/todos/delete/<int:todo_id>", methods=["POST"])
 @login_required
 def delete_todo(todo_id):
-    # Verify todo belongs to current user
-    db_write(
-        "DELETE FROM todos WHERE id=%s AND user_id=%s",
-        (todo_id, current_user.id)
-    )
+    try:
+        # Verify todo belongs to current user
+        db_write(
+            "DELETE FROM todos WHERE id=%s AND user_id=%s",
+            (todo_id, current_user.id)
+        )
+    except Exception as e:
+        logging.error(f"Error deleting todo: {e}")
     
     return redirect(url_for("todos"))
 
