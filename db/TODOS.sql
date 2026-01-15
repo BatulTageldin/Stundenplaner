@@ -4,8 +4,10 @@ CREATE TABLE schueler (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     klasse VARCHAR(50),
-    user_id INT UNIQUE,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+   
+
+
+
 );
 
 -- Tabelle für Lehrer

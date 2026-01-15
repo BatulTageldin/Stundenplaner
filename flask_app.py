@@ -109,9 +109,7 @@ def register():
             if role == 'teacher':
                 # Add to lehrer table
                 db_write("INSERT INTO lehrer (name, user_id) VALUES (%s, %s)", (username, user_id))
-            elif role == 'student':
-                # Add to schueler table
-                db_write("INSERT INTO schueler (name, user_id) VALUES (%s, %s)", (username, user_id))
+            
             return redirect(url_for("login"))
 
         error = "Benutzername existiert bereits."
