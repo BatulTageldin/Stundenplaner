@@ -217,16 +217,22 @@
     div.className = 'subject-item';
     div.dataset.subject = subjectName;
 
+    // Load saved data for this subject
+    const subjectData = savedData[subjectName] || { fach_gewichtung: 1.0, pruefungen: [] };
+    const hasSavedData = subjectData.pruefungen.length > 0;
+
     div.innerHTML = `
       <div class="subject-header">
         <div class="subject-name">${subjectName}</div>
         <button class="add-exam-btn" onclick="addExam(this)">+ Prüfung hinzufügen</button>
+        <button class="save-subject-btn" onclick="saveSubject(this)" style="background: #5cb85c; margin-left: 10px; color: white;">💾 Speichern</button>
       </div>
       <div class="subject-weight-row">
         <span>Fach-Gewichtung:</span>
-        <input type="number" class="subject-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1" style="width: 100px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+        <input type="number" class="subject-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="${subjectData.fach_gewichtung}" style="width: 100px; padding: 5px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); border-radius: 4px;">
       </div>
       <div class="exams-container">
+        ${hasSavedData ? '' : `
         <div class="exam-row">
           <div class="exam-label">Prüfung 1</div>
           <div>
@@ -238,12 +244,35 @@
             <input type="number" class="exam-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1">
           </div>
         </div>
+        `}
       </div>
       <div class="fachnote-display">
         Fachnote: <span class="fachnote-value">4.00</span> → 
         Pluspunkte: <span class="subject-points">0.00</span>
       </div>
     `;
+
+    // Load saved exams if they exist
+    if (hasSavedData) {
+      const examsContainer = div.querySelector('.exams-container');
+      subjectData.pruefungen.forEach((pruefung, index) => {
+        const examRow = document.createElement('div');
+        examRow.className = 'exam-row';
+        examRow.innerHTML = `
+          <div class="exam-label">Prüfung ${index + 1}</div>
+          <div>
+            <label>Note</label>
+            <input type="number" class="grade-input" placeholder="z.B. 4.5" step="0.5" min="1" max="6" value="${pruefung.note}">
+          </div>
+          <div>
+            <label>Prüfungs-Gewichtung</label>
+            <input type="number" class="exam-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="${pruefung.gewichtung}">
+          </div>
+          ${index > 0 ? '<button class="remove-exam-btn" onclick="removeExam(this)">✕</button>' : ''}
+        `;
+        examsContainer.appendChild(examRow);
+      });
+    }
 
     const inputs = div.querySelectorAll('.grade-input, .exam-weight-input, .subject-weight-input');
     inputs.forEach(input => {
@@ -381,6 +410,64 @@
       backgroundColor = '#f8f9fa';
     }
     totalSection.style.backgroundColor = backgroundColor;
+  }
+
+  async function saveSubject(button) {
+    const subjectItem = button.closest('.subject-item');
+    const subjectName = subjectItem.dataset.subject;
+    const fachGewichtung = parseFloat(subjectItem.querySelector('.subject-weight-input').value) || 1.0;
+    
+    const examRows = subjectItem.querySelectorAll('.exam-row');
+    const pruefungen = [];
+    
+    examRows.forEach(examRow => {
+      const note = parseFloat(examRow.querySelector('.grade-input').value);
+      const gewichtung = parseFloat(examRow.querySelector('.exam-weight-input').value);
+      
+      if (note && gewichtung) {
+        pruefungen.push({ note, gewichtung });
+      }
+    });
+    
+    try {
+      button.textContent = '💾 Speichere...';
+      button.disabled = true;
+      
+      const response = await fetch('/pluspunkte/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fachname: subjectName,
+          fach_gewichtung: fachGewichtung,
+          pruefungen: pruefungen
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        button.textContent = '✓ Gespeichert';
+        button.style.background = '#28a745';
+        setTimeout(() => {
+          button.textContent = '💾 Speichern';
+          button.style.background = '#5cb85c';
+          button.disabled = false;
+        }, 2000);
+      } else {
+        throw new Error(result.error || 'Save failed');
+      }
+    } catch (error) {
+      console.error('Error saving:', error);
+      button.textContent = '✗ Fehler';
+      button.style.background = '#dc3545';
+      setTimeout(() => {
+        button.textContent = '💾 Speichern';
+        button.style.background = '#5cb85c';
+        button.disabled = false;
+      }, 2000);
+    }
   }
 </script>
 
