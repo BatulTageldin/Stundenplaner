@@ -153,10 +153,22 @@
   const checkboxes = document.querySelectorAll('.subject-checkbox');
   const selectedSubjectsDiv = document.getElementById('selectedSubjects');
   const totalPointsDisplay = document.getElementById('totalPoints');
-  const savedData = {};  // Empty object for now, will be populated later when save functionality is added
+  const savedData = {{ saved_data|tojson|safe }};
+  let saveTimeout = null;
 
   checkboxes.forEach(checkbox => {
     checkbox.addEventListener('change', updateSelectedSubjects);
+  });
+
+  // Auto-load saved subjects on page load
+  window.addEventListener('DOMContentLoaded', () => {
+    checkboxes.forEach(checkbox => {
+      const subjectName = checkbox.value;
+      if (savedData[subjectName] && savedData[subjectName].pruefungen.length > 0) {
+        checkbox.checked = true;
+      }
+    });
+    updateSelectedSubjects();
   });
 
   function updateSelectedSubjects() {
@@ -236,7 +248,10 @@
 
     const inputs = div.querySelectorAll('.grade-input, .exam-weight-input, .subject-weight-input');
     inputs.forEach(input => {
-      input.addEventListener('input', () => calculateSubject(div));
+      input.addEventListener('input', () => {
+        calculateSubject(div);
+        autoSaveSubject(div);
+      });
     });
 
     calculateSubject(div);
@@ -267,7 +282,10 @@
 
     const inputs = examRow.querySelectorAll('.grade-input, .exam-weight-input');
     inputs.forEach(input => {
-      input.addEventListener('input', () => calculateSubject(subjectItem));
+      input.addEventListener('input', () => {
+        calculateSubject(subjectItem);
+        autoSaveSubject(subjectItem);
+      });
     });
 
     calculateSubject(subjectItem);
@@ -285,6 +303,7 @@
     });
 
     calculateSubject(subjectItem);
+    autoSaveSubject(subjectItem);
   }
 
   function calculateSubject(subjectDiv) {
@@ -370,6 +389,53 @@
       backgroundColor = '#f8f9fa';
     }
     totalSection.style.backgroundColor = backgroundColor;
+  }
+
+  function autoSaveSubject(subjectDiv) {
+    const subjectName = subjectDiv.dataset.subject;
+    
+    // Clear existing timeout
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+    
+    // Wait 1 second after last change before saving
+    saveTimeout = setTimeout(async () => {
+      const fachGewichtung = parseFloat(subjectDiv.querySelector('.subject-weight-input').value) || 1.0;
+      const examRows = subjectDiv.querySelectorAll('.exam-row');
+      const pruefungen = [];
+      
+      examRows.forEach(examRow => {
+        const note = parseFloat(examRow.querySelector('.grade-input').value);
+        const gewichtung = parseFloat(examRow.querySelector('.exam-weight-input').value);
+        
+        if (note && gewichtung) {
+          pruefungen.push({ note, gewichtung });
+        }
+      });
+      
+      try {
+        const response = await fetch('/pluspunkte/save', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fachname: subjectName,
+            fach_gewichtung: fachGewichtung,
+            pruefungen: pruefungen
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          console.log('Auto-saved:', subjectName);
+        }
+      } catch (error) {
+        console.error('Auto-save error:', error);
+      }
+    }, 1000);
   }
 </script>
 
