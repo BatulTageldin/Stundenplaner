@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Fach bearbeiten</h2>
+
+<form method="post">
+
+  <label>Fach:</label><br>
+  <input type="text" name="subject" value="{{ fach.fachname }}" required><br><br>
+
+  <label>Raum:</label><br>
+  <input type="text" name="room" value="{{ fach.raumnummer }}" required><br><br>
+
+  <label>Wochentag:</label><br>
+  <select name="weekday" required>
+    <option value="1" {% if fach.weekday == '1' %}selected{% endif %}>Montag</option>
+    <option value="2" {% if fach.weekday == '2' %}selected{% endif %}>Dienstag</option>
+    <option value="3" {% if fach.weekday == '3' %}selected{% endif %}>Mittwoch</option>
+    <option value="4" {% if fach.weekday == '4' %}selected{% endif %}>Donnerstag</option>
+    <option value="5" {% if fach.weekday == '5' %}selected{% endif %}>Freitag</option>
+  </select><br><br>
+
+  <label>Zeitblock:</label><br>
+  <select name="timeblock" required>
+    <option value="08:45-09:25" {% if fach.startzeit == '08:45' %}selected{% endif %}>08:45 – 09:25</option>
+    <option value="09:35-10:20" {% if fach.startzeit == '09:35' %}selected{% endif %}>09:35 – 10:20</option>
+    <option value="10:35-11:20" {% if fach.startzeit == '10:35' %}selected{% endif %}>10:35 – 11:20</option>
+    <option value="11:30-12:15" {% if fach.startzeit == '11:30' %}selected{% endif %}>11:30 – 12:15</option>
+    <option value="13:20-14:05" {% if fach.startzeit == '13:20' %}selected{% endif %}>13:20 – 14:05</option>
+    <option value="14:15-15:00" {% if fach.startzeit == '14:15' %}selected{% endif %}>14:15 – 15:00</option>
+  </select><br><br>
+
+  <button type="submit">Aktualisieren</button>
+  <a href="{{ url_for('teacher_week') }}" style="margin-left: 10px;">Abbrechen</a>
+
+</form>
+{% endblock %}

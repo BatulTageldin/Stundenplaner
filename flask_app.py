@@ -369,6 +369,7 @@ def teacher_week():
 
     subjects = db_read("""
         SELECT 
+            faecher.id AS fach_id,
             faecher.fachname,
             lehrer.name AS lehrer,
             raum.raumnummer AS raum,
@@ -388,6 +389,7 @@ def teacher_week():
 
     for s in subjects:
         stundenplan[s["tag"]].append({
+            "fach_id": s["fach_id"],
             "fachname": s["fachname"],
             "lehrer": s["lehrer"],
             "raum": s["raum"],
@@ -396,6 +398,119 @@ def teacher_week():
         })
 
     return render_template("teacher_week.html", stundenplan=stundenplan)
+
+
+# -----------------------------
+# LEHRER FACH LÖSCHEN
+# -----------------------------
+@app.route("/lesson/delete/<int:fach_id>", methods=["POST"])
+@login_required
+def delete_lesson(fach_id):
+    if current_user.role != 'teacher':
+        return redirect(url_for("week_view"))
+    
+    # Get lehrer_id for current user
+    lehrer = db_read("SELECT id FROM lehrer WHERE user_id=%s", (current_user.id,), single=True)
+    if not lehrer:
+        return redirect(url_for("teacher_week"))
+    
+    # Ensure the lesson belongs to the current teacher
+    fach = db_read(
+        "SELECT id FROM faecher WHERE id=%s AND lehrer_id=%s",
+        (fach_id, lehrer["id"]),
+        single=True
+    )
+    if fach:
+        # Delete related stundenplan entries first
+        db_write("DELETE FROM stundenplan WHERE fach_id=%s", (fach_id,))
+        # Delete the fach
+        db_write("DELETE FROM faecher WHERE id=%s", (fach_id,))
+    
+    return redirect(url_for("teacher_week"))
+
+
+# -----------------------------
+# LEHRER FACH BEARBEITEN
+# -----------------------------
+@app.route("/lesson/edit/<int:fach_id>", methods=["GET", "POST"])
+@login_required
+def edit_lesson(fach_id):
+    if current_user.role != 'teacher':
+        return redirect(url_for("week_view"))
+    
+    # Get lehrer_id for current user
+    lehrer = db_read("SELECT id FROM lehrer WHERE user_id=%s", (current_user.id,), single=True)
+    if not lehrer:
+        return redirect(url_for("teacher_week"))
+    
+    # Ensure the lesson belongs to the current teacher
+    fach = db_read(
+        "SELECT * FROM faecher WHERE id=%s AND lehrer_id=%s",
+        (fach_id, lehrer["id"]),
+        single=True
+    )
+    if not fach:
+        return redirect(url_for("teacher_week"))
+    
+    if request.method == "POST":
+        subject = request.form["subject"]
+        room_number = request.form.get("room", "unbekannt")
+        weekday = request.form["weekday"]
+        start, end = request.form["timeblock"].split("-")
+        
+        # Wochentag von Zahl → Text
+        tage = {
+            "1": "Montag",
+            "2": "Dienstag",
+            "3": "Mittwoch",
+            "4": "Donnerstag",
+            "5": "Freitag"
+        }
+        tag = tage[weekday]
+        
+        # Raum speichern oder finden
+        raum = db_read(
+            "SELECT id FROM raum WHERE raumnummer=%s",
+            (room_number,),
+            single=True
+        )
+        if not raum:
+            db_write("INSERT INTO raum (raumnummer) VALUES (%s)", (room_number,))
+            raum = db_read(
+                "SELECT id FROM raum WHERE raumnummer=%s",
+                (room_number,),
+                single=True
+            )
+        
+        # Update the fach
+        db_write(
+            "UPDATE faecher SET fachname=%s, raum_id=%s, tag=%s, startzeit=%s, endzeit=%s WHERE id=%s",
+            (subject, raum["id"], tag, start, end, fach_id)
+        )
+        
+        return redirect(url_for("teacher_week"))
+    
+    # Convert tag back to number for form
+    tag_to_number = {
+        "Montag": "1",
+        "Dienstag": "2",
+        "Mittwoch": "3",
+        "Donnerstag": "4",
+        "Freitag": "5"
+    }
+    
+    # Get raum info
+    raum = db_read("SELECT raumnummer FROM raum WHERE id=%s", (fach["raum_id"],), single=True)
+    
+    fach_data = {
+        "fachname": fach["fachname"],
+        "raumnummer": raum["raumnummer"] if raum else "unbekannt",
+        "weekday": tag_to_number.get(fach["tag"], "1"),
+        "startzeit": str(fach["startzeit"])[:5],
+        "endzeit": str(fach["endzeit"])[:5]
+    }
+    
+    return render_template("edit_lesson.html", fach=fach_data)
 
 
 # -----------------------------
