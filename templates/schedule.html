@@ -43,7 +43,6 @@
     border-radius: 8px;
     box-shadow: var(--shadow);
     border: 1px solid var(--border-color);
-    border-left: 5px solid;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -123,8 +122,7 @@
   <div class="fach-item" 
        data-fachname="{{ fach.fachname|lower }}" 
        data-lehrer="{{ fach.lehrer|lower }}" 
-       data-tag="{{ fach.tag }}"
-       style="border-left-color: {{ fach.farbe or '#3498db' }}">
+       data-tag="{{ fach.tag }}">
     <div class="fach-info">
       <strong>{{ fach.fachname }}</strong> - {{ fach.lehrer }}<br>
       <small>{{ fach.tag }} {{ fach.startzeit }} - {{ fach.endzeit }} (Raum {{ fach.raum }})</small>
