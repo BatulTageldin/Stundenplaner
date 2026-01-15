@@ -3,18 +3,146 @@
 {% block content %}
 <h2>Fach zum Stundenplan hinzufügen</h2>
 
+<style>
+  .filter-container {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  .filter-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+  .filter-input {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+  }
+  .fach-item {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .fach-info {
+    flex: 1;
+  }
+  .no-results {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+  }
+</style>
+
 {% if available_faecher %}
-<ul>
+<div class="filter-container">
+  <div class="filter-row">
+    <input 
+      type="text" 
+      id="searchInput" 
+      class="filter-input search-input" 
+      placeholder="Suche nach Fach oder Lehrer..."
+    >
+    
+    <select id="tagFilter" class="filter-input">
+      <option value="">Alle Wochentage</option>
+      <option value="Montag">Montag</option>
+      <option value="Dienstag">Dienstag</option>
+      <option value="Mittwoch">Mittwoch</option>
+      <option value="Donnerstag">Donnerstag</option>
+      <option value="Freitag">Freitag</option>
+    </select>
+    
+    <button onclick="resetFilters()" style="padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      Filter zurücksetzen
+    </button>
+  </div>
+</div>
+
+<div id="fachList">
   {% for fach in available_faecher %}
-  <li>
-    <strong>{{ fach.fachname }}</strong> - {{ fach.lehrer }} - {{ fach.tag }} {{ fach.startzeit }} - {{ fach.endzeit }} (Raum {{ fach.raum }})
+  <div class="fach-item" 
+       data-fachname="{{ fach.fachname|lower }}" 
+       data-lehrer="{{ fach.lehrer|lower }}" 
+       data-tag="{{ fach.tag }}">
+    <div class="fach-info">
+      <strong>{{ fach.fachname }}</strong> - {{ fach.lehrer }}<br>
+      <small>{{ fach.tag }} {{ fach.startzeit }} - {{ fach.endzeit }} (Raum {{ fach.raum }})</small>
+    </div>
     <form method="post" style="display:inline;">
       <input type="hidden" name="fach_id" value="{{ fach.id }}">
-      <button type="submit">Hinzufügen</button>
+      <button type="submit" style="padding: 8px 15px; background: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Hinzufügen
+      </button>
     </form>
-  </li>
+  </div>
   {% endfor %}
-</ul>
+</div>
+
+<div id="noResults" class="no-results" style="display: none;">
+  Keine Fächer gefunden, die deinen Filterkriterien entsprechen.
+</div>
+
+<script>
+  const searchInput = document.getElementById('searchInput');
+  const tagFilter = document.getElementById('tagFilter');
+  const fachItems = document.querySelectorAll('.fach-item');
+  const noResults = document.getElementById('noResults');
+
+  function filterFaecher() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const selectedTag = tagFilter.value;
+    let visibleCount = 0;
+
+    fachItems.forEach(item => {
+      const fachname = item.dataset.fachname;
+      const lehrer = item.dataset.lehrer;
+      const tag = item.dataset.tag;
+
+      const matchesSearch = searchTerm === '' || 
+                           fachname.includes(searchTerm) || 
+                           lehrer.includes(searchTerm);
+      const matchesTag = selectedTag === '' || tag === selectedTag;
+
+      if (matchesSearch && matchesTag) {
+        item.style.display = 'flex';
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    // Show/hide no results message
+    if (visibleCount === 0) {
+      noResults.style.display = 'block';
+    } else {
+      noResults.style.display = 'none';
+    }
+  }
+
+  function resetFilters() {
+    searchInput.value = '';
+    tagFilter.value = '';
+    filterFaecher();
+  }
+
+  // Event listeners
+  searchInput.addEventListener('input', filterFaecher);
+  tagFilter.addEventListener('change', filterFaecher);
+</script>
+
 {% else %}
 <p>Keine weiteren Fächer verfügbar.</p>
 {% endif %}
