@@ -3,6 +3,12 @@
 {% block content %}
 <h2>Fach zum Stundenplan hinzufügen</h2>
 
+{% if error %}
+<div style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; border-radius: 4px;">
+  {{ error }}
+</div>
+{% endif %}
+
 <style>
   .filter-container {
     background: #f8f9fa;

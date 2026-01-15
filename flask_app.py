@@ -170,6 +170,16 @@ def add_lesson():
         }
         tag = tage[weekday]
 
+        # Check for time conflicts - teacher can't have multiple classes at the same time
+        conflict = db_read("""
+            SELECT id FROM faecher 
+            WHERE lehrer_id=%s AND tag=%s AND startzeit=%s AND endzeit=%s
+        """, (lehrer_id, tag, start, end), single=True)
+        
+        if conflict:
+            # Teacher already has a class at this time
+            return render_template("lesson.html", error="Du hast bereits ein Fach zu dieser Zeit!")
+
         # Raum speichern oder finden
         raum = db_read(
             "SELECT id FROM raum WHERE raumnummer=%s",
@@ -223,6 +233,37 @@ def add_schedule():
         if existing:
             # Already added, perhaps flash message, but for now redirect
             return redirect(url_for("week_view"))
+        
+        # Check for time conflicts - student can't enroll in multiple classes at the same time
+        conflict = db_read("""
+            SELECT stundenplan.id FROM stundenplan
+            JOIN faecher f1 ON stundenplan.fach_id = f1.id
+            JOIN faecher f2 ON f2.id = %s
+            WHERE stundenplan.user_id = %s 
+            AND f1.tag = f2.tag 
+            AND f1.startzeit = f2.startzeit 
+            AND f1.endzeit = f2.endzeit
+        """, (fach_id, current_user.id), single=True)
+        
+        if conflict:
+            # Student already has a class at this time
+            available_faecher = db_read("""
+                SELECT 
+                    faecher.id,
+                    faecher.fachname,
+                    lehrer.name AS lehrer,
+                    raum.raumnummer AS raum,
+                    faecher.tag,
+                    faecher.startzeit,
+                    faecher.endzeit
+                FROM faecher
+                JOIN lehrer ON faecher.lehrer_id = lehrer.id
+                JOIN raum ON faecher.raum_id = raum.id
+                LEFT JOIN stundenplan ON faecher.id = stundenplan.fach_id AND stundenplan.user_id = %s
+                WHERE stundenplan.id IS NULL
+                ORDER BY faecher.fachname, faecher.tag, faecher.startzeit
+            """, (current_user.id,)) or []
+            return render_template("schedule.html", available_faecher=available_faecher, error="Du hast bereits ein Fach zu dieser Zeit!")
 
         # Stundenplan-Eintrag speichern
         db_write(
@@ -467,6 +508,24 @@ def edit_lesson(fach_id):
             "5": "Freitag"
         }
         tag = tage[weekday]
+        
+        # Check for time conflicts - teacher can't have multiple classes at the same time
+        conflict = db_read("""
+            SELECT id FROM faecher 
+            WHERE lehrer_id=%s AND tag=%s AND startzeit=%s AND endzeit=%s AND id != %s
+        """, (lehrer["id"], tag, start, end, fach_id), single=True)
+        
+        if conflict:
+            # Teacher already has a class at this time
+            raum = db_read("SELECT raumnummer FROM raum WHERE id=%s", (fach["raum_id"],), single=True)
+            fach_data = {
+                "fachname": fach["fachname"],
+                "raumnummer": raum["raumnummer"] if raum else "unbekannt",
+                "weekday": tag_to_number.get(fach["tag"], "1"),
+                "startzeit": str(fach["startzeit"])[:5],
+                "endzeit": str(fach["endzeit"])[:5]
+            }
+            return render_template("edit_lesson.html", fach=fach_data, error="Du hast bereits ein Fach zu dieser Zeit!")
         
         # Raum speichern oder finden
         raum = db_read(
