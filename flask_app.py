@@ -514,6 +514,27 @@ def edit_lesson(fach_id):
 
 
 # -----------------------------
+# PLUSPUNKTE CALCULATOR
+# -----------------------------
+@app.route("/pluspunkte")
+@login_required
+def pluspunkte():
+    if current_user.role != 'student':
+        return redirect(url_for("teacher_week"))
+    
+    # Get all unique subjects from the student's schedule
+    subjects = db_read("""
+        SELECT DISTINCT faecher.fachname
+        FROM stundenplan
+        JOIN faecher ON stundenplan.fach_id = faecher.id
+        WHERE stundenplan.user_id = %s
+        ORDER BY faecher.fachname
+    """, (current_user.id,)) or []
+    
+    return render_template("pluspunkte.html", subjects=subjects)
+
+
+# -----------------------------
 # START APP
 # -----------------------------
 if __name__ == "__main__":

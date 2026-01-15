@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Pluspunkte Rechner</h2>
+
+<style>
+  .calculator-container {
+    background: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .subject-selector {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e9ecef;
+  }
+  .subject-item {
+    background: #f8f9fa;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .subject-name {
+    flex: 1;
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .grade-input, .weight-input {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 120px;
+    font-size: 14px;
+  }
+  .points-display {
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 4px;
+    min-width: 100px;
+    text-align: center;
+    background: #e9ecef;
+  }
+  .total-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    color: white;
+    text-align: center;
+  }
+  .total-label {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .total-value {
+    font-size: 36px;
+    font-weight: bold;
+  }
+  .total-status {
+    font-size: 16px;
+    margin-top: 10px;
+    opacity: 0.9;
+  }
+  .positive {
+    color: #28a745;
+    font-weight: bold;
+  }
+  .negative {
+    color: #dc3545;
+    font-weight: bold;
+  }
+  .instructions {
+    background: #e7f3ff;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  .instructions strong {
+    color: #0056b3;
+  }
+  .no-subjects {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: #666;
+  }
+</style>
+
+{% if subjects %}
+<div class="calculator-container">
+  <div class="instructions">
+    <strong>Wie funktioniert die Berechnung?</strong><br>
+    • Note 4.0 = 0 Punkte<br>
+    • Jede +0.5 über 4.0 gibt +0.5 Punkte<br>
+    • Jede −0.5 unter 4.0 gibt −1.0 Punkt<br>
+    • Punkte × Gewichtung = Gewichtete Punkte<br>
+    • Summe aller gewichteten Punkte = Pluspunkte
+  </div>
+
+  <div class="subject-selector">
+    <h4>Wähle deine Fächer aus:</h4>
+    {% for subject in subjects %}
+    <label style="display: flex; align-items: center; padding: 10px; background: #f8f9fa; margin-bottom: 8px; border-radius: 4px; cursor: pointer;">
+      <input type="checkbox" class="subject-checkbox" value="{{ subject.fachname }}" style="margin-right: 10px; width: 18px; height: 18px;">
+      <span style="font-weight: 500;">{{ subject.fachname }}</span>
+    </label>
+    {% endfor %}
+  </div>
+
+  <div id="selectedSubjects"></div>
+
+  <div class="total-section">
+    <div class="total-label">Gesamt Pluspunkte</div>
+    <div class="total-value" id="totalPoints">0.00</div>
+    <div class="total-status" id="totalStatus">Neutral</div>
+  </div>
+</div>
+
+<script>
+  const checkboxes = document.querySelectorAll('.subject-checkbox');
+  const selectedSubjectsDiv = document.getElementById('selectedSubjects');
+  const totalPointsDisplay = document.getElementById('totalPoints');
+  const totalStatusDisplay = document.getElementById('totalStatus');
+
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', updateSelectedSubjects);
+  });
+
+  function updateSelectedSubjects() {
+    selectedSubjectsDiv.innerHTML = '';
+    
+    checkboxes.forEach(checkbox => {
+      if (checkbox.checked) {
+        const subjectName = checkbox.value;
+        const subjectDiv = createSubjectRow(subjectName);
+        selectedSubjectsDiv.appendChild(subjectDiv);
+      }
+    });
+
+    calculateTotal();
+  }
+
+  function createSubjectRow(subjectName) {
+    const div = document.createElement('div');
+    div.className = 'subject-item';
+    div.dataset.subject = subjectName;
+
+    div.innerHTML = `
+      <div class="subject-name">${subjectName}</div>
+      <div>
+        <label>Note</label>
+        <input type="number" class="grade-input" placeholder="z.B. 4.5" step="0.5" min="1" max="6" value="4.0">
+      </div>
+      <div>
+        <label>Gewichtung</label>
+        <input type="number" class="weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1">
+      </div>
+      <div>
+        <label>Punkte</label>
+        <div class="points-display">0.00</div>
+      </div>
+    `;
+
+    const gradeInput = div.querySelector('.grade-input');
+    const weightInput = div.querySelector('.weight-input');
+
+    gradeInput.addEventListener('input', () => calculateSubject(div));
+    weightInput.addEventListener('input', () => calculateSubject(div));
+
+    calculateSubject(div);
+    return div;
+  }
+
+  function calculateSubject(subjectDiv) {
+    const gradeInput = subjectDiv.querySelector('.grade-input');
+    const weightInput = subjectDiv.querySelector('.weight-input');
+    const pointsDisplay = subjectDiv.querySelector('.points-display');
+
+    const grade = parseFloat(gradeInput.value) || 4.0;
+    const weight = parseFloat(weightInput.value) || 1.0;
+
+    // Calculate base points
+    let basePoints = 0;
+    if (grade > 4.0) {
+      // Above 4.0: +0.5 points per +0.5 grade
+      basePoints = (grade - 4.0);
+    } else if (grade < 4.0) {
+      // Below 4.0: -1.0 points per -0.5 grade
+      const difference = 4.0 - grade;
+      basePoints = -(difference * 2);
+    }
+
+    // Apply weight
+    const weightedPoints = basePoints * weight;
+
+    // Update display
+    pointsDisplay.textContent = weightedPoints.toFixed(2);
+    
+    if (weightedPoints > 0) {
+      pointsDisplay.style.background = '#d4edda';
+      pointsDisplay.style.color = '#155724';
+    } else if (weightedPoints < 0) {
+      pointsDisplay.style.background = '#f8d7da';
+      pointsDisplay.style.color = '#721c24';
+    } else {
+      pointsDisplay.style.background = '#e9ecef';
+      pointsDisplay.style.color = '#000';
+    }
+
+    calculateTotal();
+  }
+
+  function calculateTotal() {
+    const allSubjects = document.querySelectorAll('.subject-item');
+    let total = 0;
+
+    allSubjects.forEach(subject => {
+      const pointsText = subject.querySelector('.points-display').textContent;
+      total += parseFloat(pointsText) || 0;
+    });
+
+    totalPointsDisplay.textContent = total.toFixed(2);
+
+    if (total > 0) {
+      totalStatusDisplay.textContent = '✓ Positiv';
+      totalStatusDisplay.style.color = '#90EE90';
+    } else if (total < 0) {
+      totalStatusDisplay.textContent = '✗ Negativ';
+      totalStatusDisplay.style.color = '#FFB6C1';
+    } else {
+      totalStatusDisplay.textContent = '— Neutral';
+      totalStatusDisplay.style.color = 'white';
+    }
+  }
+</script>
+
+{% else %}
+<div class="no-subjects">
+  <h3>Keine Fächer gefunden</h3>
+  <p>Du musst zuerst Fächer zu deinem Stundenplan hinzufügen.</p>
+  <a href="{{ url_for('add_schedule') }}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background: #5cb85c; color: white; text-decoration: none; border-radius: 4px;">
+    Fach zum Stundenplan hinzufügen
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}
