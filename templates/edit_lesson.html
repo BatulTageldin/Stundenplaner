@@ -49,6 +49,11 @@
         select.setAttribute('name', 'subject');
       }
     }
+    
+    // Run on page load to set correct name attribute
+    window.addEventListener('DOMContentLoaded', function() {
+      toggleCustomInput();
+    });
   </script>
 
   <label>Raum:</label><br>
