@@ -31,6 +31,24 @@
     padding-bottom: 10px;
     border-bottom: 1px solid #dee2e6;
   }
+  .subject-weight-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #e3f2fd;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .fachnote-display {
+    padding: 10px;
+    background: #fff3cd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    text-align: center;
+  }
   .exam-row {
     display: flex;
     align-items: center;
@@ -45,6 +63,26 @@
     font-weight: 500;
   }
   .add-exam-btn, .remove-exam-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .add-exam-btn {
+    background: #28a745;
+    color: white;
+  }
+  .remove-exam-btn {
+    background: #dc3545;
+    color: white;
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: #666;
+  }
     padding: 6px 12px;
     border: none;
     border-radius: 4px;
@@ -184,6 +222,10 @@
         <div class="subject-name">${subjectName}</div>
         <button class="add-exam-btn" onclick="addExam(this)">+ Prüfung hinzufügen</button>
       </div>
+      <div class="subject-weight-row">
+        <span>Fach-Gewichtung:</span>
+        <input type="number" class="subject-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1" style="width: 100px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
       <div class="exams-container">
         <div class="exam-row">
           <div class="exam-label">Prüfung 1</div>
@@ -192,18 +234,18 @@
             <input type="number" class="grade-input" placeholder="z.B. 4.5" step="0.5" min="1" max="6" value="4.0">
           </div>
           <div>
-            <label>Gewichtung</label>
-            <input type="number" class="weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1">
-          </div>
-          <div>
-            <label>Punkte</label>
-            <div class="points-display">0.00</div>
+            <label>Prüfungs-Gewichtung</label>
+            <input type="number" class="exam-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1">
           </div>
         </div>
       </div>
+      <div class="fachnote-display">
+        Fachnote: <span class="fachnote-value">4.00</span> → 
+        Pluspunkte: <span class="subject-points">0.00</span>
+      </div>
     `;
 
-    const inputs = div.querySelectorAll('.grade-input, .weight-input');
+    const inputs = div.querySelectorAll('.grade-input, .exam-weight-input, .subject-weight-input');
     inputs.forEach(input => {
       input.addEventListener('input', () => calculateSubject(div));
     });
@@ -226,19 +268,15 @@
         <input type="number" class="grade-input" placeholder="z.B. 4.5" step="0.5" min="1" max="6" value="4.0">
       </div>
       <div>
-        <label>Gewichtung</label>
-        <input type="number" class="weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1">
-      </div>
-      <div>
-        <label>Punkte</label>
-        <div class="points-display">0.00</div>
+        <label>Prüfungs-Gewichtung</label>
+        <input type="number" class="exam-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1">
       </div>
       <button class="remove-exam-btn" onclick="removeExam(this)">✕</button>
     `;
 
     examsContainer.appendChild(examRow);
 
-    const inputs = examRow.querySelectorAll('.grade-input, .weight-input');
+    const inputs = examRow.querySelectorAll('.grade-input, .exam-weight-input');
     inputs.forEach(input => {
       input.addEventListener('input', () => calculateSubject(subjectItem));
     });
@@ -262,51 +300,79 @@
 
   function calculateSubject(subjectDiv) {
     const examRows = subjectDiv.querySelectorAll('.exam-row');
+    const subjectWeightInput = subjectDiv.querySelector('.subject-weight-input');
+    const fachnoteValue = subjectDiv.querySelector('.fachnote-value');
+    const subjectPointsDisplay = subjectDiv.querySelector('.subject-points');
+
+    // Step 1: Calculate weighted average of all exams to get Fachnote
+    let totalWeightedGrades = 0;
+    let totalExamWeights = 0;
 
     examRows.forEach(examRow => {
       const gradeInput = examRow.querySelector('.grade-input');
-      const weightInput = examRow.querySelector('.weight-input');
-      const pointsDisplay = examRow.querySelector('.points-display');
+      const examWeightInput = examRow.querySelector('.exam-weight-input');
 
       const grade = parseFloat(gradeInput.value) || 4.0;
-      const weight = parseFloat(weightInput.value) || 1.0;
+      const examWeight = parseFloat(examWeightInput.value) || 1.0;
 
-      let basePoints = 0;
-      if (grade > 4.0) {
-        basePoints = (grade - 4.0);
-      } else if (grade < 4.0) {
-        const difference = 4.0 - grade;
-        basePoints = -(difference * 2);
-      }
-
-      const weightedPoints = basePoints * weight;
-      pointsDisplay.textContent = weightedPoints.toFixed(2);
-      
-      if (weightedPoints > 0) {
-        pointsDisplay.style.background = '#d4edda';
-        pointsDisplay.style.color = '#155724';
-      } else if (weightedPoints < 0) {
-        pointsDisplay.style.background = '#f8d7da';
-        pointsDisplay.style.color = '#721c24';
-      } else {
-        pointsDisplay.style.background = '#e9ecef';
-        pointsDisplay.style.color = '#000';
-      }
+      totalWeightedGrades += grade * examWeight;
+      totalExamWeights += examWeight;
     });
+
+    const fachnote = totalExamWeights > 0 ? totalWeightedGrades / totalExamWeights : 4.0;
+    fachnoteValue.textContent = fachnote.toFixed(2);
+
+    // Step 2: Calculate points based on Fachnote
+    let basePoints = 0;
+    if (fachnote > 4.0) {
+      basePoints = (fachnote - 4.0);
+    } else if (fachnote < 4.0) {
+      const difference = 4.0 - fachnote;
+      basePoints = -(difference * 2);
+    }
+
+    // Step 3: Multiply by subject weight
+    const subjectWeight = parseFloat(subjectWeightInput.value) || 1.0;
+    const finalPoints = basePoints * subjectWeight;
+
+    subjectPointsDisplay.textContent = finalPoints.toFixed(2);
+    
+    // Color coding for the points display
+    if (finalPoints > 0) {
+      subjectPointsDisplay.style.color = '#155724';
+    } else if (finalPoints < 0) {
+      subjectPointsDisplay.style.color = '#721c24';
+    } else {
+      subjectPointsDisplay.style.color = '#000';
+    }
 
     calculateTotal();
   }
 
   function calculateTotal() {
-    const allExamRows = document.querySelectorAll('.exam-row');
+    const allSubjects = document.querySelectorAll('.subject-item');
     let total = 0;
 
-    allExamRows.forEach(examRow => {
-      const pointsText = examRow.querySelector('.points-display').textContent;
-      total += parseFloat(pointsText) || 0;
+    allSubjects.forEach(subject => {
+      const subjectPointsText = subject.querySelector('.subject-points').textContent;
+      total += parseFloat(subjectPointsText) || 0;
     });
 
     totalPointsDisplay.textContent = total.toFixed(2);
+
+    // Color gradient: green for positive, red for negative
+    const totalSection = totalPointsDisplay.parentElement;
+    let backgroundColor;
+    if (total > 0) {
+      const intensity = Math.min(total / 10, 1);
+      backgroundColor = `rgb(${Math.round(200 - 140*intensity)}, ${Math.round(230 + 25*intensity)}, ${Math.round(200 - 140*intensity)})`;
+    } else if (total < 0) {
+      const intensity = Math.min(Math.abs(total) / 10, 1);
+      backgroundColor = `rgb(${Math.round(230 + 25*intensity)}, ${Math.round(200 - 140*intensity)}, ${Math.round(200 - 140*intensity)})`;
+    } else {
+      backgroundColor = '#f8f9fa';
+    }
+    totalSection.style.backgroundColor = backgroundColor;
   }
 </script>
 
