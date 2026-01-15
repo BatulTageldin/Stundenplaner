@@ -5,20 +5,22 @@
 
 <style>
   .calculator-container {
-    background: #fff;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     padding: 25px;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    box-shadow: var(--shadow);
     max-width: 800px;
     margin: 0 auto;
   }
   .subject-selector {
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 2px solid var(--border-color);
   }
   .subject-item {
-    background: #f8f9fa;
+    background: var(--bg-primary);
+    color: var(--text-primary);
     padding: 20px;
     margin-bottom: 20px;
     border-radius: 6px;
@@ -29,7 +31,7 @@
     align-items: center;
     margin-bottom: 15px;
     padding-bottom: 10px;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--border-color);
   }
   .subject-weight-row {
     display: flex;
@@ -41,6 +43,9 @@
     border-radius: 4px;
     font-weight: 500;
   }
+  [data-theme="dark"] .subject-weight-row {
+    background: #1e3a5f;
+  }
   .fachnote-display {
     padding: 10px;
     background: #fff3cd;
@@ -49,13 +54,17 @@
     font-weight: 600;
     text-align: center;
   }
+  [data-theme="dark"] .fachnote-display {
+    background: #3d3520;
+    color: #ffd700;
+  }
   .exam-row {
     display: flex;
     align-items: center;
     gap: 15px;
     margin-bottom: 10px;
     padding: 10px;
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 4px;
   }
   .exam-label {
@@ -81,45 +90,19 @@
     background: #dc3545;
     color: white;
   }
-  label {
-    display: block;
-    margin-bottom: 5px;
-    font-size: 13px;
-    color: #666;
-  }
-    padding: 6px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-  }
-  .add-exam-btn {
-    background: #28a745;
-    color: white;
-  }
-  .remove-exam-btn {
-    background: #dc3545;
-    color: white;
-  }
   .subject-name {
     flex: 1;
     font-weight: 600;
     font-size: 16px;
   }
-  .grade-input, .weight-input {
+  .grade-input, .weight-input, .exam-weight-input {
     padding: 8px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
     border-radius: 4px;
     width: 120px;
     font-size: 14px;
-  }
-  .points-display {
-    font-weight: 600;
-    padding: 8px 12px;
-    border-radius: 4px;
-    min-width: 100px;
-    text-align: center;
-    background: #e9ecef;
   }
   .total-section {
     margin-top: 30px;
@@ -137,39 +120,16 @@
     font-size: 36px;
     font-weight: bold;
   }
-  .total-status {
-    font-size: 16px;
-    margin-top: 10px;
-    opacity: 0.9;
-  }
-  .positive {
-    color: #28a745;
-    font-weight: bold;
-  }
-  .negative {
-    color: #dc3545;
-    font-weight: bold;
-  }
-  .instructions {
-    background: #e7f3ff;
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    font-size: 14px;
-  }
-  .instructions strong {
-    color: #0056b3;
-  }
   .no-subjects {
     text-align: center;
     padding: 40px;
-    color: #666;
+    color: var(--text-secondary);
   }
   label {
     display: block;
     margin-bottom: 5px;
     font-size: 13px;
-    color: #666;
+    color: var(--text-secondary);
   }
 </style>
 
