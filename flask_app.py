@@ -705,7 +705,14 @@ def add_todo():
     title = request.form.get("title", "").strip()
     due_date = request.form.get("due_date", None)
     
+    print(f"\n=== ADD TODO DEBUG ===")
+    print(f"User ID: {current_user.id}")
+    print(f"Title: {title}")
+    print(f"Due date (raw): {request.form.get('due_date')}")
+    print(f"Due date (processed): {due_date}")
+    
     if not title:
+        print("ERROR: No title provided")
         return redirect(url_for("todos"))
     
     # Convert empty string to None for SQL
@@ -713,11 +720,16 @@ def add_todo():
         due_date = None
     
     try:
+        print(f"Attempting INSERT with user_id={current_user.id}, title='{title}', due_date={due_date}")
         db_write(
             "INSERT INTO todos (user_id, title, due_date) VALUES (%s, %s, %s)",
             (current_user.id, title, due_date)
         )
+        print("INSERT successful!")
     except Exception as e:
+        print(f"ERROR in db_write: {e}")
+        import traceback
+        print(traceback.format_exc())
         logging.error(f"Error adding todo: {e}")
     
     return redirect(url_for("todos"))
