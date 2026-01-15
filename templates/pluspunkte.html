@@ -19,12 +19,45 @@
   }
   .subject-item {
     background: #f8f9fa;
-    padding: 15px;
-    margin-bottom: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
     border-radius: 6px;
+  }
+  .subject-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+  }
+  .exam-row {
     display: flex;
     align-items: center;
     gap: 15px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: white;
+    border-radius: 4px;
+  }
+  .exam-label {
+    flex: 0.5;
+    font-weight: 500;
+  }
+  .add-exam-btn, .remove-exam-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .add-exam-btn {
+    background: #28a745;
+    color: white;
+  }
+  .remove-exam-btn {
+    background: #dc3545;
+    color: white;
   }
   .subject-name {
     flex: 1;
@@ -100,15 +133,6 @@
 
 {% if subjects %}
 <div class="calculator-container">
-  <div class="instructions">
-    <strong>Wie funktioniert die Berechnung?</strong><br>
-    • Note 4.0 = 0 Punkte<br>
-    • Jede +0.5 über 4.0 gibt +0.5 Punkte<br>
-    • Jede −0.5 unter 4.0 gibt −1.0 Punkt<br>
-    • Punkte × Gewichtung = Gewichtete Punkte<br>
-    • Summe aller gewichteten Punkte = Pluspunkte
-  </div>
-
   <div class="subject-selector">
     <h4>Wähle deine Fächer aus:</h4>
     {% for subject in subjects %}
@@ -124,7 +148,6 @@
   <div class="total-section">
     <div class="total-label">Gesamt Pluspunkte</div>
     <div class="total-value" id="totalPoints">0.00</div>
-    <div class="total-status" id="totalStatus">Neutral</div>
   </div>
 </div>
 
@@ -132,7 +155,6 @@
   const checkboxes = document.querySelectorAll('.subject-checkbox');
   const selectedSubjectsDiv = document.getElementById('selectedSubjects');
   const totalPointsDisplay = document.getElementById('totalPoints');
-  const totalStatusDisplay = document.getElementById('totalStatus');
 
   checkboxes.forEach(checkbox => {
     checkbox.addEventListener('change', updateSelectedSubjects);
@@ -158,7 +180,47 @@
     div.dataset.subject = subjectName;
 
     div.innerHTML = `
-      <div class="subject-name">${subjectName}</div>
+      <div class="subject-header">
+        <div class="subject-name">${subjectName}</div>
+        <button class="add-exam-btn" onclick="addExam(this)">+ Prüfung hinzufügen</button>
+      </div>
+      <div class="exams-container">
+        <div class="exam-row">
+          <div class="exam-label">Prüfung 1</div>
+          <div>
+            <label>Note</label>
+            <input type="number" class="grade-input" placeholder="z.B. 4.5" step="0.5" min="1" max="6" value="4.0">
+          </div>
+          <div>
+            <label>Gewichtung</label>
+            <input type="number" class="weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1">
+          </div>
+          <div>
+            <label>Punkte</label>
+            <div class="points-display">0.00</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const inputs = div.querySelectorAll('.grade-input, .weight-input');
+    inputs.forEach(input => {
+      input.addEventListener('input', () => calculateSubject(div));
+    });
+
+    calculateSubject(div);
+    return div;
+  }
+
+  function addExam(button) {
+    const subjectItem = button.closest('.subject-item');
+    const examsContainer = subjectItem.querySelector('.exams-container');
+    const examCount = examsContainer.querySelectorAll('.exam-row').length;
+
+    const examRow = document.createElement('div');
+    examRow.className = 'exam-row';
+    examRow.innerHTML = `
+      <div class="exam-label">Prüfung ${examCount + 1}</div>
       <div>
         <label>Note</label>
         <input type="number" class="grade-input" placeholder="z.B. 4.5" step="0.5" min="1" max="6" value="4.0">
@@ -171,78 +233,80 @@
         <label>Punkte</label>
         <div class="points-display">0.00</div>
       </div>
+      <button class="remove-exam-btn" onclick="removeExam(this)">✕</button>
     `;
 
-    const gradeInput = div.querySelector('.grade-input');
-    const weightInput = div.querySelector('.weight-input');
+    examsContainer.appendChild(examRow);
 
-    gradeInput.addEventListener('input', () => calculateSubject(div));
-    weightInput.addEventListener('input', () => calculateSubject(div));
+    const inputs = examRow.querySelectorAll('.grade-input, .weight-input');
+    inputs.forEach(input => {
+      input.addEventListener('input', () => calculateSubject(subjectItem));
+    });
 
-    calculateSubject(div);
-    return div;
+    calculateSubject(subjectItem);
+  }
+
+  function removeExam(button) {
+    const examRow = button.closest('.exam-row');
+    const subjectItem = button.closest('.subject-item');
+    examRow.remove();
+
+    const examsContainer = subjectItem.querySelector('.exams-container');
+    const examRows = examsContainer.querySelectorAll('.exam-row');
+    examRows.forEach((row, index) => {
+      row.querySelector('.exam-label').textContent = `Prüfung ${index + 1}`;
+    });
+
+    calculateSubject(subjectItem);
   }
 
   function calculateSubject(subjectDiv) {
-    const gradeInput = subjectDiv.querySelector('.grade-input');
-    const weightInput = subjectDiv.querySelector('.weight-input');
-    const pointsDisplay = subjectDiv.querySelector('.points-display');
+    const examRows = subjectDiv.querySelectorAll('.exam-row');
 
-    const grade = parseFloat(gradeInput.value) || 4.0;
-    const weight = parseFloat(weightInput.value) || 1.0;
+    examRows.forEach(examRow => {
+      const gradeInput = examRow.querySelector('.grade-input');
+      const weightInput = examRow.querySelector('.weight-input');
+      const pointsDisplay = examRow.querySelector('.points-display');
 
-    // Calculate base points
-    let basePoints = 0;
-    if (grade > 4.0) {
-      // Above 4.0: +0.5 points per +0.5 grade
-      basePoints = (grade - 4.0);
-    } else if (grade < 4.0) {
-      // Below 4.0: -1.0 points per -0.5 grade
-      const difference = 4.0 - grade;
-      basePoints = -(difference * 2);
-    }
+      const grade = parseFloat(gradeInput.value) || 4.0;
+      const weight = parseFloat(weightInput.value) || 1.0;
 
-    // Apply weight
-    const weightedPoints = basePoints * weight;
+      let basePoints = 0;
+      if (grade > 4.0) {
+        basePoints = (grade - 4.0);
+      } else if (grade < 4.0) {
+        const difference = 4.0 - grade;
+        basePoints = -(difference * 2);
+      }
 
-    // Update display
-    pointsDisplay.textContent = weightedPoints.toFixed(2);
-    
-    if (weightedPoints > 0) {
-      pointsDisplay.style.background = '#d4edda';
-      pointsDisplay.style.color = '#155724';
-    } else if (weightedPoints < 0) {
-      pointsDisplay.style.background = '#f8d7da';
-      pointsDisplay.style.color = '#721c24';
-    } else {
-      pointsDisplay.style.background = '#e9ecef';
-      pointsDisplay.style.color = '#000';
-    }
+      const weightedPoints = basePoints * weight;
+      pointsDisplay.textContent = weightedPoints.toFixed(2);
+      
+      if (weightedPoints > 0) {
+        pointsDisplay.style.background = '#d4edda';
+        pointsDisplay.style.color = '#155724';
+      } else if (weightedPoints < 0) {
+        pointsDisplay.style.background = '#f8d7da';
+        pointsDisplay.style.color = '#721c24';
+      } else {
+        pointsDisplay.style.background = '#e9ecef';
+        pointsDisplay.style.color = '#000';
+      }
+    });
 
     calculateTotal();
   }
 
   function calculateTotal() {
-    const allSubjects = document.querySelectorAll('.subject-item');
+    const allExamRows = document.querySelectorAll('.exam-row');
     let total = 0;
 
-    allSubjects.forEach(subject => {
-      const pointsText = subject.querySelector('.points-display').textContent;
+    allExamRows.forEach(examRow => {
+      const pointsText = examRow.querySelector('.points-display').textContent;
       total += parseFloat(pointsText) || 0;
     });
 
     totalPointsDisplay.textContent = total.toFixed(2);
-
-    if (total > 0) {
-      totalStatusDisplay.textContent = '✓ Positiv';
-      totalStatusDisplay.style.color = '#90EE90';
-    } else if (total < 0) {
-      totalStatusDisplay.textContent = '✗ Negativ';
-      totalStatusDisplay.style.color = '#FFB6C1';
-    } else {
-      totalStatusDisplay.textContent = '— Neutral';
-      totalStatusDisplay.style.color = 'white';
-    }
   }
 </script>
 
