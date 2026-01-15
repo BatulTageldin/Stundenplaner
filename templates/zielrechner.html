@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Was brauche ich noch?</h2>
+<p style="color: var(--text-secondary); margin-bottom: 30px;">
+  Berechne, welche Note du in deiner nächsten Prüfung brauchst, um dein Pluspunkte-Ziel zu erreichen.
+</p>
+
+<style>
+  .calculator-container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  
+  .form-section {
+    background: var(--bg-secondary);
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    margin-bottom: 25px;
+  }
+  
+  .form-section h3 {
+    color: var(--text-primary);
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-radius: 4px;
+    font-size: 15px;
+    box-sizing: border-box;
+  }
+  
+  .calculate-btn {
+    width: 100%;
+    padding: 14px;
+    background: #5cb85c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .calculate-btn:hover {
+    background: #4cae4c;
+  }
+  
+  .result-container {
+    background: var(--bg-secondary);
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    display: none;
+  }
+  
+  .result-container.show {
+    display: block;
+  }
+  
+  .result-title {
+    color: var(--text-primary);
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 20px;
+  }
+  
+  .result-info {
+    background: rgba(52, 152, 219, 0.1);
+    border-left: 4px solid #3498db;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+  }
+  
+  .result-info p {
+    margin: 8px 0;
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+  
+  .result-info strong {
+    color: var(--text-primary);
+  }
+  
+  .result-main {
+    background: rgba(46, 204, 113, 0.1);
+    border-left: 4px solid #2ecc71;
+    padding: 20px;
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+  }
+  
+  .result-main.warning {
+    background: rgba(230, 126, 34, 0.1);
+    border-left-color: #e67e22;
+  }
+  
+  .result-main.error {
+    background: rgba(231, 76, 60, 0.1);
+    border-left-color: #e74c3c;
+  }
+  
+  .current-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+  
+  .stat-box {
+    background: rgba(0, 0, 0, 0.02);
+    padding: 12px;
+    border-radius: 4px;
+    text-align: center;
+  }
+  
+  [data-theme="dark"] .stat-box {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .stat-box .label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+  
+  .stat-box .value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  
+  .help-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 5px;
+  }
+</style>
+
+<div class="calculator-container">
+  <div class="form-section">
+    <h3>📊 Berechnung starten</h3>
+    
+    <div class="form-group">
+      <label for="fachSelect">Fach auswählen:</label>
+      <select id="fachSelect" class="form-control" onchange="loadSubjectData()">
+        <option value="">-- Fach auswählen --</option>
+        {% for subject in subjects %}
+        <option value="{{ subject.fachname }}">{{ subject.fachname }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="zielPunkte">Gewünschte Pluspunkte am Ende:</label>
+      <input type="number" id="zielPunkte" class="form-control" step="0.5" min="-10" max="10" placeholder="z.B. 0.5">
+      <div class="help-text">Wie viele Pluspunkte möchtest du in diesem Fach erreichen?</div>
+    </div>
+    
+    <div class="form-group">
+      <label for="anzahlPruefungen">Anzahl zukünftiger Prüfungen:</label>
+      <input type="number" id="anzahlPruefungen" class="form-control" min="1" max="10" value="1">
+      <div class="help-text">Wie viele Prüfungen stehen noch an?</div>
+    </div>
+    
+    <div class="form-group">
+      <label for="pruefungGewichtung">Gewichtung der zukünftigen Prüfungen:</label>
+      <input type="number" id="pruefungGewichtung" class="form-control" step="0.1" min="0.1" max="5" value="1.0">
+      <div class="help-text">Standard: 1.0 (einfach gewichtet)</div>
+    </div>
+    
+    <button class="calculate-btn" onclick="calculateNeededGrade()">
+      Berechnen
+    </button>
+  </div>
+  
+  <div id="resultContainer" class="result-container">
+    <h3 class="result-title">📈 Ergebnis</h3>
+    
+    <div class="result-info">
+      <p><strong>Aktueller Stand:</strong></p>
+      <div class="current-stats">
+        <div class="stat-box">
+          <div class="label">Fachnote</div>
+          <div class="value" id="currentNote">-</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Pluspunkte</div>
+          <div class="value" id="currentPunkte">-</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Anzahl Prüfungen</div>
+          <div class="value" id="anzahlPruefungenDisplay">-</div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="resultMain" class="result-main">
+      <!-- Result will be inserted here -->
+    </div>
+  </div>
+</div>
+
+<script>
+  let subjectData = {{ saved_data|tojson|safe }};
+  let currentSubject = null;
+  
+  function loadSubjectData() {
+    const select = document.getElementById('fachSelect');
+    currentSubject = select.value;
+    
+    if (!currentSubject || !subjectData[currentSubject]) {
+      return;
+    }
+  }
+  
+  function calculateNeededGrade() {
+    const fachSelect = document.getElementById('fachSelect');
+    const zielPunkte = parseFloat(document.getElementById('zielPunkte').value);
+    const anzahlPruefungen = parseInt(document.getElementById('anzahlPruefungen').value);
+    const pruefungGewichtung = parseFloat(document.getElementById('pruefungGewichtung').value);
+    
+    // Validation
+    if (!fachSelect.value) {
+      alert('Bitte wähle ein Fach aus.');
+      return;
+    }
+    
+    if (isNaN(zielPunkte)) {
+      alert('Bitte gib deine gewünschten Pluspunkte ein.');
+      return;
+    }
+    
+    if (isNaN(anzahlPruefungen) || anzahlPruefungen < 1) {
+      alert('Bitte gib die Anzahl zukünftiger Prüfungen ein (mindestens 1).');
+      return;
+    }
+    
+    if (isNaN(pruefungGewichtung) || pruefungGewichtung <= 0) {
+      alert('Bitte gib eine gültige Gewichtung ein.');
+      return;
+    }
+    
+    const fachname = fachSelect.value;
+    const data = subjectData[fachname];
+    
+    if (!data) {
+      alert('Keine Daten für dieses Fach gefunden.');
+      return;
+    }
+    
+    // Calculate current average grade (Fachnote)
+    const pruefungen = data.pruefungen || [];
+    let currentNote = 4.0;
+    
+    if (pruefungen.length > 0) {
+      let sumWeighted = 0;
+      let sumGewichtung = 0;
+      
+      pruefungen.forEach(p => {
+        sumWeighted += p.note * p.gewichtung;
+        sumGewichtung += p.gewichtung;
+      });
+      
+      currentNote = sumWeighted / sumGewichtung;
+    }
+    
+    // Calculate current Pluspunkte
+    let currentPunkte = 0;
+    if (currentNote >= 4.0) {
+      currentPunkte = (currentNote - 4.0) * 2;
+    } else {
+      currentPunkte = (currentNote - 4.0) * 2;
+    }
+    currentPunkte = currentPunkte * (data.fach_gewichtung || 1.0);
+    currentPunkte = Math.round(currentPunkte * 2) / 2; // Round to nearest 0.5
+    
+    // Calculate needed final grade to reach goal
+    // Formula: Ziel-Punkte = (Fachnote_neu - 4.0) * 2 * Fachgewichtung
+    // Fachnote_neu = (sum of all weighted grades) / (sum of all weights)
+    
+    const fachGewichtung = data.fach_gewichtung || 1.0;
+    
+    // Reverse calculation from Pluspunkte to Fachnote
+    const neededFachnote = (zielPunkte / fachGewichtung / 2) + 4.0;
+    
+    // Calculate what average is needed from future exams
+    // Current weighted sum + (needed_grade * future_weight * n) = neededFachnote * total_weight
+    
+    let currentWeightedSum = 0;
+    let currentTotalWeight = 0;
+    
+    pruefungen.forEach(p => {
+      currentWeightedSum += p.note * p.gewichtung;
+      currentTotalWeight += p.gewichtung;
+    });
+    
+    const futureWeight = pruefungGewichtung * anzahlPruefungen;
+    const totalWeight = currentTotalWeight + futureWeight;
+    
+    // neededFachnote * totalWeight = currentWeightedSum + (neededGrade * futureWeight)
+    // neededGrade = (neededFachnote * totalWeight - currentWeightedSum) / futureWeight
+    
+    const neededGrade = (neededFachnote * totalWeight - currentWeightedSum) / futureWeight;
+    
+    // Display results
+    document.getElementById('currentNote').textContent = currentNote.toFixed(2);
+    document.getElementById('currentPunkte').textContent = currentPunkte >= 0 ? '+' + currentPunkte.toFixed(1) : currentPunkte.toFixed(1);
+    document.getElementById('anzahlPruefungenDisplay').textContent = pruefungen.length;
+    
+    const resultMain = document.getElementById('resultMain');
+    const resultContainer = document.getElementById('resultContainer');
+    
+    if (neededGrade < 1.0 || neededGrade > 6.0) {
+      if (neededGrade < 1.0) {
+        resultMain.className = 'result-main';
+        resultMain.innerHTML = `🎉 Du hast dein Ziel bereits erreicht!<br><br>Du kannst sogar schlechtere Noten bekommen und erreichst trotzdem <strong>${zielPunkte >= 0 ? '+' : ''}${zielPunkte.toFixed(1)}</strong> Pluspunkte.`;
+      } else {
+        resultMain.className = 'result-main error';
+        resultMain.innerHTML = `⚠️ Dein Ziel ist nicht mehr erreichbar.<br><br>Selbst mit einer Note von <strong>6.0</strong> in allen zukünftigen Prüfungen erreichst du nur etwa <strong>${calculateMaxPossible(pruefungen, anzahlPruefungen, pruefungGewichtung, fachGewichtung).toFixed(1)}</strong> Pluspunkte.`;
+      }
+    } else if (neededGrade >= 5.5) {
+      resultMain.className = 'result-main warning';
+      resultMain.innerHTML = `📚 Du brauchst <strong>mindestens eine ${neededGrade.toFixed(2)}</strong> in ${anzahlPruefungen > 1 ? 'jeder der ' + anzahlPruefungen + ' zukünftigen Prüfungen' : 'der nächsten Prüfung'}.<br><br>Das ist sehr anspruchsvoll! Überlege dir, ob dein Ziel realistisch ist.`;
+    } else {
+      resultMain.className = 'result-main';
+      resultMain.innerHTML = `✅ Du brauchst <strong>mindestens eine ${neededGrade.toFixed(2)}</strong> in ${anzahlPruefungen > 1 ? 'jeder der ' + anzahlPruefungen + ' zukünftigen Prüfungen' : 'der nächsten Prüfung'}.<br><br>Um am Ende <strong>${zielPunkte >= 0 ? '+' : ''}${zielPunkte.toFixed(1)}</strong> Pluspunkte zu erreichen.`;
+    }
+    
+    resultContainer.classList.add('show');
+    resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  
+  function calculateMaxPossible(currentPruefungen, anzahlFuture, futureWeight, fachGewichtung) {
+    let weightedSum = 0;
+    let totalWeight = 0;
+    
+    currentPruefungen.forEach(p => {
+      weightedSum += p.note * p.gewichtung;
+      totalWeight += p.gewichtung;
+    });
+    
+    // Add perfect scores for future exams
+    weightedSum += 6.0 * futureWeight * anzahlFuture;
+    totalWeight += futureWeight * anzahlFuture;
+    
+    const maxFachnote = weightedSum / totalWeight;
+    const maxPunkte = (maxFachnote - 4.0) * 2 * fachGewichtung;
+    return Math.round(maxPunkte * 2) / 2;
+  }
+</script>
+
+{% endblock %}

@@ -148,6 +148,7 @@
               <li><a href="{{ url_for('week_view') }}">Stundenplan</a></li>
               <li><a href="{{ url_for('add_schedule') }}">Fach zum Stundenplan</a></li>
               <li><a href="{{ url_for('pluspunkte') }}">Pluspunkte</a></li>
+              <li><a href="{{ url_for('zielrechner') }}">Was brauche ich noch?</a></li>
               {% elif current_user.role == 'teacher' %}
               <li><a href="{{ url_for('teacher_week') }}">Alle Fächer</a></li>
               <li><a href="{{ url_for('add_lesson') }}">Fach hinzufügen</a></li>
