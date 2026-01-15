@@ -10,6 +10,7 @@
     margin-bottom: 12px;
     border-radius: 8px;
     box-shadow: var(--shadow);
+    border-left: 5px solid;
   }
   .weekday-title {
     margin-top: 30px;
@@ -24,7 +25,7 @@
 
   {% if eintraege %}
     {% for e in eintraege %}
-      <div class="lesson-card">
+      <div class="lesson-card" style="border-left-color: {{ e.farbe }}">
         <strong>{{ e.fachname }}</strong><br>
         Lehrer: {{ e.lehrer }}<br>
         Raum: {{ e.raum }}<br>

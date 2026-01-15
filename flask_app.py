@@ -202,8 +202,8 @@ def add_lesson():
         )
         if not fach:
             db_write(
-                "INSERT INTO faecher (fachname, lehrer_id, raum_id, tag, startzeit, endzeit) VALUES (%s,%s,%s,%s,%s,%s)",
-                (subject, lehrer_id, raum["id"], tag, start, end)
+                "INSERT INTO faecher (fachname, lehrer_id, raum_id, tag, startzeit, endzeit, farbe) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                (subject, lehrer_id, raum["id"], tag, start, end, color)
             )
             fach = db_read(
                 "SELECT id FROM faecher WHERE fachname=%s AND lehrer_id=%s AND raum_id=%s AND tag=%s AND startzeit=%s AND endzeit=%s",
@@ -278,6 +278,7 @@ def add_schedule():
         SELECT 
             faecher.id,
             faecher.fachname,
+            faecher.farbe,
             lehrer.name AS lehrer,
             raum.raumnummer AS raum,
             faecher.tag,
@@ -363,6 +364,7 @@ def week_view():
             faecher.startzeit,
             faecher.endzeit,
             faecher.fachname,
+            faecher.farbe,
             lehrer.name AS lehrer,
             raum.raumnummer AS raum
         FROM stundenplan
@@ -383,7 +385,7 @@ def week_view():
             "fachname": e["fachname"],
             "lehrer": e["lehrer"],
             "raum": e["raum"],
-
+            "farbe": e.get("farbe", "#3498db"),
             # FIX: timedelta → String (HH:MM)
             "startzeit": str(e["startzeit"])[:5],
             "endzeit": str(e["endzeit"])[:5]
@@ -412,6 +414,7 @@ def teacher_week():
         SELECT 
             faecher.id AS fach_id,
             faecher.fachname,
+            faecher.farbe,
             lehrer.name AS lehrer,
             raum.raumnummer AS raum,
             faecher.tag,
@@ -434,6 +437,7 @@ def teacher_week():
             "fachname": s["fachname"],
             "lehrer": s["lehrer"],
             "raum": s["raum"],
+            "farbe": s.get("farbe", "#3498db"),
             "startzeit": str(s["startzeit"])[:5],
             "endzeit": str(s["endzeit"])[:5]
         })
@@ -496,6 +500,7 @@ def edit_lesson(fach_id):
     if request.method == "POST":
         subject = request.form["subject"]
         room_number = request.form.get("room", "unbekannt")
+        color = request.form.get("color", "#3498db")
         weekday = request.form["weekday"]
         start, end = request.form["timeblock"].split("-")
         
@@ -543,8 +548,8 @@ def edit_lesson(fach_id):
         
         # Update the fach
         db_write(
-            "UPDATE faecher SET fachname=%s, raum_id=%s, tag=%s, startzeit=%s, endzeit=%s WHERE id=%s",
-            (subject, raum["id"], tag, start, end, fach_id)
+            "UPDATE faecher SET fachname=%s, raum_id=%s, tag=%s, startzeit=%s, endzeit=%s, farbe=%s WHERE id=%s",
+            (subject, raum["id"], tag, start, end, color, fach_id)
         )
         
         return redirect(url_for("teacher_week"))
@@ -566,7 +571,8 @@ def edit_lesson(fach_id):
         "raumnummer": raum["raumnummer"] if raum else "unbekannt",
         "weekday": tag_to_number.get(fach["tag"], "1"),
         "startzeit": str(fach["startzeit"])[:5],
-        "endzeit": str(fach["endzeit"])[:5]
+        "endzeit": str(fach["endzeit"])[:5],
+        "farbe": fach.get("farbe", "#3498db")
     }
     
     return render_template("edit_lesson.html", fach=fach_data)

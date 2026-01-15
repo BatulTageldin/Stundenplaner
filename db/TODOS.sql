@@ -35,6 +35,7 @@ CREATE TABLE faecher (
     tag VARCHAR(20),
     startzeit TIME,
     endzeit TIME,
+    farbe VARCHAR(7) DEFAULT '#3498db',
     FOREIGN KEY (lehrer_id) REFERENCES lehrer(id),
     FOREIGN KEY (raum_id) REFERENCES raum(id)
 );

@@ -59,6 +59,9 @@
   <label>Raum:</label><br>
   <input type="text" name="room" value="{{ fach.raumnummer }}" required><br><br>
 
+  <label>Farbe:</label><br>
+  <input type="color" name="color" value="{{ fach.farbe or '#3498db' }}" style="width: 100px; height: 40px; border: none; border-radius: 4px; cursor: pointer;"><br><br>
+
   <label>Wochentag:</label><br>
   <select name="weekday" required>
     <option value="1" {% if fach.weekday == '1' %}selected{% endif %}>Montag</option>
