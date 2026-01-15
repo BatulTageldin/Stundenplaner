@@ -227,20 +227,9 @@
         <div class="todo-content">
           <div class="todo-title">{{ todo.titel }}</div>
           {% if todo.faelligkeitsdatum %}
-            {% set due_date = todo.faelligkeitsdatum %}
-            {% if due_date < today and not todo.erledigt %}
-              <div class="todo-date overdue">
-                ⚠️ Überfällig: {{ todo.faelligkeitsdatum.strftime('%d.%m.%Y') }}
-              </div>
-            {% elif due_date == today and not todo.erledigt %}
-              <div class="todo-date today">
-                📅 Heute fällig
-              </div>
-            {% else %}
-              <div class="todo-date {% if not todo.erledigt %}upcoming{% endif %}">
-                📅 Fällig: {{ todo.faelligkeitsdatum.strftime('%d.%m.%Y') }}
-              </div>
-            {% endif %}
+            <div class="todo-date">
+              📅 Fällig: {{ todo.faelligkeitsdatum }}
+            </div>
           {% endif %}
         </div>
         
