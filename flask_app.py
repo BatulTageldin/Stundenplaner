@@ -684,10 +684,10 @@ def todos():
     
     # Get all todos for current user, sorted by: uncompleted first, then by due date
     all_todos = db_read("""
-        SELECT id, titel, erledigt, faelligkeitsdatum, erstellt_am
+        SELECT id, title, completed, due_date, created_at
         FROM todos
         WHERE user_id = %s
-        ORDER BY erledigt ASC, faelligkeitsdatum ASC, erstellt_am DESC
+        ORDER BY completed ASC, due_date ASC, created_at DESC
     """, (current_user.id,)) or []
     
     today = date.today()
@@ -698,19 +698,19 @@ def todos():
 @app.route("/todos/add", methods=["POST"])
 @login_required
 def add_todo():
-    titel = request.form.get("titel", "").strip()
-    faelligkeitsdatum = request.form.get("faelligkeitsdatum", None)
+    title = request.form.get("title", "").strip()
+    due_date = request.form.get("due_date", None)
     
-    if not titel:
+    if not title:
         return redirect(url_for("todos"))
     
     # Convert empty string to None for SQL
-    if faelligkeitsdatum == "":
-        faelligkeitsdatum = None
+    if due_date == "":
+        due_date = None
     
     db_write(
-        "INSERT INTO todos (user_id, titel, faelligkeitsdatum) VALUES (%s, %s, %s)",
-        (current_user.id, titel, faelligkeitsdatum)
+        "INSERT INTO todos (user_id, title, due_date) VALUES (%s, %s, %s)",
+        (current_user.id, title, due_date)
     )
     
     return redirect(url_for("todos"))
@@ -721,15 +721,15 @@ def add_todo():
 def toggle_todo(todo_id):
     # Verify todo belongs to current user
     todo = db_read(
-        "SELECT id, erledigt FROM todos WHERE id=%s AND user_id=%s",
+        "SELECT id, completed FROM todos WHERE id=%s AND user_id=%s",
         (todo_id, current_user.id),
         single=True
     )
     
     if todo:
-        new_status = not todo["erledigt"]
+        new_status = not todo["completed"]
         db_write(
-            "UPDATE todos SET erledigt=%s WHERE id=%s",
+            "UPDATE todos SET completed=%s WHERE id=%s",
             (new_status, todo_id)
         )
     

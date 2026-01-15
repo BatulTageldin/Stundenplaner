@@ -184,11 +184,11 @@
     <form method="post" action="{{ url_for('add_todo') }}">
       <div class="form-row">
         <div class="form-group" style="flex: 2;">
-          <label for="titel">Aufgabe:</label>
+          <label for="title">Aufgabe:</label>
           <input 
             type="text" 
-            id="titel" 
-            name="titel" 
+            id="title" 
+            name="title" 
             class="form-control" 
             placeholder="z.B. Mathe-Hausaufgaben machen"
             required
@@ -196,11 +196,11 @@
           >
         </div>
         <div class="form-group">
-          <label for="faelligkeitsdatum">Fälligkeitsdatum (optional):</label>
+          <label for="due_date">Fälligkeitsdatum (optional):</label>
           <input 
             type="date" 
-            id="faelligkeitsdatum" 
-            name="faelligkeitsdatum" 
+            id="due_date" 
+            name="due_date" 
             class="form-control"
           >
         </div>
@@ -214,21 +214,21 @@
     
     {% if todos %}
       {% for todo in todos %}
-      <div class="todo-item {% if todo.erledigt %}completed{% endif %}">
+      <div class="todo-item {% if todo.completed %}completed{% endif %}">
         <form method="post" action="{{ url_for('toggle_todo', todo_id=todo.id) }}" style="margin: 0;">
           <input 
             type="checkbox" 
             class="todo-checkbox" 
-            {% if todo.erledigt %}checked{% endif %}
+            {% if todo.completed %}checked{% endif %}
             onchange="this.form.submit()"
           >
         </form>
         
         <div class="todo-content">
-          <div class="todo-title">{{ todo.titel }}</div>
-          {% if todo.faelligkeitsdatum %}
+          <div class="todo-title">{{ todo.title }}</div>
+          {% if todo.due_date %}
             <div class="todo-date">
-              📅 Fällig: {{ todo.faelligkeitsdatum }}
+              📅 Fällig: {{ todo.due_date }}
             </div>
           {% endif %}
         </div>
