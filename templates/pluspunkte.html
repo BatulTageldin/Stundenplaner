@@ -333,9 +333,17 @@
 
     // Step 3: Multiply by subject weight
     const subjectWeight = parseFloat(subjectWeightInput.value) || 1.0;
-    const finalPoints = basePoints * subjectWeight;
+    const calculatedPoints = basePoints * subjectWeight;
 
-    subjectPointsDisplay.textContent = finalPoints.toFixed(2);
+    // Step 4: Round to nearest 0.5 (ab 0.25 aufrunden)
+    let finalPoints;
+    if (calculatedPoints >= 0) {
+      finalPoints = Math.floor(calculatedPoints * 2 + 0.5) / 2;
+    } else {
+      finalPoints = Math.ceil(calculatedPoints * 2 - 0.5) / 2;
+    }
+
+    subjectPointsDisplay.textContent = finalPoints.toFixed(1);
     
     // Color coding for the points display
     if (finalPoints > 0) {
@@ -358,7 +366,7 @@
       total += parseFloat(subjectPointsText) || 0;
     });
 
-    totalPointsDisplay.textContent = total.toFixed(2);
+    totalPointsDisplay.textContent = total.toFixed(1);
 
     // Color gradient: green for positive, red for negative
     const totalSection = totalPointsDisplay.parentElement;
