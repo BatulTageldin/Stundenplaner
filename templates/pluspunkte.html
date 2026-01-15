@@ -5,22 +5,20 @@
 
 <style>
   .calculator-container {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
+    background: #fff;
     padding: 25px;
     border-radius: 8px;
-    box-shadow: var(--shadow);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
     max-width: 800px;
     margin: 0 auto;
   }
   .subject-selector {
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 2px solid #e9ecef;
   }
   .subject-item {
-    background: var(--bg-primary);
-    color: var(--text-primary);
+    background: #f8f9fa;
     padding: 20px;
     margin-bottom: 20px;
     border-radius: 6px;
@@ -31,7 +29,7 @@
     align-items: center;
     margin-bottom: 15px;
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #dee2e6;
   }
   .subject-weight-row {
     display: flex;
@@ -43,9 +41,6 @@
     border-radius: 4px;
     font-weight: 500;
   }
-  [data-theme="dark"] .subject-weight-row {
-    background: #1e3a5f;
-  }
   .fachnote-display {
     padding: 10px;
     background: #fff3cd;
@@ -54,24 +49,20 @@
     font-weight: 600;
     text-align: center;
   }
-  [data-theme="dark"] .fachnote-display {
-    background: #3d3520;
-    color: #ffd700;
-  }
   .exam-row {
     display: flex;
     align-items: center;
     gap: 15px;
     margin-bottom: 10px;
     padding: 10px;
-    background: var(--bg-secondary);
+    background: white;
     border-radius: 4px;
   }
   .exam-label {
     flex: 0.5;
     font-weight: 500;
   }
-  .add-exam-btn, .remove-exam-btn, .save-subject-btn {
+  .add-exam-btn, .remove-exam-btn {
     padding: 6px 12px;
     border: none;
     border-radius: 4px;
@@ -82,8 +73,24 @@
     background: #28a745;
     color: white;
   }
-  .save-subject-btn {
-    background: #5cb85c;
+  .remove-exam-btn {
+    background: #dc3545;
+    color: white;
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: #666;
+  }
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .add-exam-btn {
+    background: #28a745;
     color: white;
   }
   .remove-exam-btn {
@@ -95,14 +102,20 @@
     font-weight: 600;
     font-size: 16px;
   }
-  .grade-input, .weight-input, .exam-weight-input {
+  .grade-input, .weight-input {
     padding: 8px 12px;
-    border: 1px solid var(--input-border);
-    background: var(--input-bg);
-    color: var(--text-primary);
+    border: 1px solid #ccc;
     border-radius: 4px;
     width: 120px;
     font-size: 14px;
+  }
+  .points-display {
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 4px;
+    min-width: 100px;
+    text-align: center;
+    background: #e9ecef;
   }
   .total-section {
     margin-top: 30px;
@@ -120,16 +133,39 @@
     font-size: 36px;
     font-weight: bold;
   }
+  .total-status {
+    font-size: 16px;
+    margin-top: 10px;
+    opacity: 0.9;
+  }
+  .positive {
+    color: #28a745;
+    font-weight: bold;
+  }
+  .negative {
+    color: #dc3545;
+    font-weight: bold;
+  }
+  .instructions {
+    background: #e7f3ff;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  .instructions strong {
+    color: #0056b3;
+  }
   .no-subjects {
     text-align: center;
     padding: 40px;
-    color: var(--text-secondary);
+    color: #666;
   }
   label {
     display: block;
     margin-bottom: 5px;
     font-size: 13px;
-    color: var(--text-secondary);
+    color: #666;
   }
 </style>
 
@@ -157,21 +193,9 @@
   const checkboxes = document.querySelectorAll('.subject-checkbox');
   const selectedSubjectsDiv = document.getElementById('selectedSubjects');
   const totalPointsDisplay = document.getElementById('totalPoints');
-  const savedData = {{ saved_data|tojson|safe }};
 
   checkboxes.forEach(checkbox => {
     checkbox.addEventListener('change', updateSelectedSubjects);
-  });
-
-  // Auto-load saved subjects
-  window.addEventListener('DOMContentLoaded', () => {
-    checkboxes.forEach(checkbox => {
-      const subjectName = checkbox.value;
-      if (savedData[subjectName] && savedData[subjectName].pruefungen.length > 0) {
-        checkbox.checked = true;
-      }
-    });
-    updateSelectedSubjects();
   });
 
   function updateSelectedSubjects() {
@@ -193,22 +217,16 @@
     div.className = 'subject-item';
     div.dataset.subject = subjectName;
 
-    // Load saved data for this subject
-    const subjectData = savedData[subjectName] || { fach_gewichtung: 1.0, pruefungen: [] };
-    const hasSavedData = subjectData.pruefungen.length > 0;
-
     div.innerHTML = `
       <div class="subject-header">
         <div class="subject-name">${subjectName}</div>
         <button class="add-exam-btn" onclick="addExam(this)">+ Prüfung hinzufügen</button>
-        <button class="save-subject-btn" onclick="saveSubject(this)" style="background: #5cb85c; margin-left: 10px;">💾 Speichern</button>
       </div>
       <div class="subject-weight-row">
         <span>Fach-Gewichtung:</span>
-        <input type="number" class="subject-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="${subjectData.fach_gewichtung}" style="width: 100px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+        <input type="number" class="subject-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1" style="width: 100px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
       </div>
       <div class="exams-container">
-        ${hasSavedData ? '' : `
         <div class="exam-row">
           <div class="exam-label">Prüfung 1</div>
           <div>
@@ -220,35 +238,12 @@
             <input type="number" class="exam-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="1">
           </div>
         </div>
-        `}
       </div>
       <div class="fachnote-display">
         Fachnote: <span class="fachnote-value">4.00</span> → 
         Pluspunkte: <span class="subject-points">0.00</span>
       </div>
     `;
-
-    // Load saved exams
-    if (hasSavedData) {
-      const examsContainer = div.querySelector('.exams-container');
-      subjectData.pruefungen.forEach((pruefung, index) => {
-        const examRow = document.createElement('div');
-        examRow.className = 'exam-row';
-        examRow.innerHTML = `
-          <div class="exam-label">Prüfung ${index + 1}</div>
-          <div>
-            <label>Note</label>
-            <input type="number" class="grade-input" placeholder="z.B. 4.5" step="0.5" min="1" max="6" value="${pruefung.note}">
-          </div>
-          <div>
-            <label>Prüfungs-Gewichtung</label>
-            <input type="number" class="exam-weight-input" placeholder="z.B. 1" step="0.5" min="0.5" value="${pruefung.gewichtung}">
-          </div>
-          ${index > 0 ? '<button class="remove-exam-btn" onclick="removeExam(this)">✕</button>' : ''}
-        `;
-        examsContainer.appendChild(examRow);
-      });
-    }
 
     const inputs = div.querySelectorAll('.grade-input, .exam-weight-input, .subject-weight-input');
     inputs.forEach(input => {
@@ -386,61 +381,6 @@
       backgroundColor = '#f8f9fa';
     }
     totalSection.style.backgroundColor = backgroundColor;
-  }
-
-  async function saveSubject(button) {
-    const subjectItem = button.closest('.subject-item');
-    const subjectName = subjectItem.dataset.subject;
-    const fachGewichtung = parseFloat(subjectItem.querySelector('.subject-weight-input').value) || 1.0;
-    
-    const examRows = subjectItem.querySelectorAll('.exam-row');
-    const pruefungen = [];
-    
-    examRows.forEach(examRow => {
-      const note = parseFloat(examRow.querySelector('.grade-input').value);
-      const gewichtung = parseFloat(examRow.querySelector('.exam-weight-input').value);
-      
-      if (note && gewichtung) {
-        pruefungen.push({ note, gewichtung });
-      }
-    });
-    
-    try {
-      button.textContent = '💾 Speichere...';
-      button.disabled = true;
-      
-      const response = await fetch('/pluspunkte/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fachname: subjectName,
-          fach_gewichtung: fachGewichtung,
-          pruefungen: pruefungen
-        })
-      });
-      
-      if (response.ok) {
-        button.textContent = '✓ Gespeichert';
-        button.style.background = '#28a745';
-        setTimeout(() => {
-          button.textContent = '💾 Speichern';
-          button.style.background = '#5cb85c';
-          button.disabled = false;
-        }, 2000);
-      } else {
-        throw new Error('Save failed');
-      }
-    } catch (error) {
-      button.textContent = '✗ Fehler';
-      button.style.background = '#dc3545';
-      setTimeout(() => {
-        button.textContent = '💾 Speichern';
-        button.style.background = '#5cb85c';
-        button.disabled = false;
-      }, 2000);
-    }
   }
 </script>
 
