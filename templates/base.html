@@ -178,5 +178,33 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    
+    <script>
+      // Theme toggle functionality
+      function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Update button icon
+        const button = document.getElementById('themeToggle');
+        button.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+      }
+      
+      // Load saved theme on page load
+      (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        // Update button icon
+        const button = document.getElementById('themeToggle');
+        if (button) {
+          button.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        }
+      })();
+    </script>
   </body>
 </html>
