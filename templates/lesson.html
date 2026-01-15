@@ -6,7 +6,44 @@
 <form method="post">
 
   <label>Fach:</label><br>
-  <input type="text" name="subject" required><br><br>
+  <select id="subjectSelect" name="subject" required onchange="toggleCustomInput()">
+    <option value="">-- Fach auswählen --</option>
+    <option value="Mathematik">Mathematik</option>
+    <option value="Deutsch">Deutsch</option>
+    <option value="Englisch">Englisch</option>
+    <option value="Französisch">Französisch</option>
+    <option value="Geschichte">Geschichte</option>
+    <option value="Geografie">Geografie</option>
+    <option value="Biologie">Biologie</option>
+    <option value="Chemie">Chemie</option>
+    <option value="Physik">Physik</option>
+    <option value="Informatik">Informatik</option>
+    <option value="Wirtschaft & Recht">Wirtschaft & Recht</option>
+    <option value="Musik">Musik</option>
+    <option value="Bildnerisches Gestalten">Bildnerisches Gestalten</option>
+    <option value="Sport">Sport</option>
+    <option value="custom">Anderes (Ergänzungsfach)</option>
+  </select><br>
+  <input type="text" id="customSubject" name="custom_subject" placeholder="Eigenes Fach eingeben" style="display:none; margin-top: 10px;"><br><br>
+  
+  <script>
+    function toggleCustomInput() {
+      const select = document.getElementById('subjectSelect');
+      const customInput = document.getElementById('customSubject');
+      
+      if (select.value === 'custom') {
+        customInput.style.display = 'block';
+        customInput.required = true;
+        select.removeAttribute('name');
+        customInput.setAttribute('name', 'subject');
+      } else {
+        customInput.style.display = 'none';
+        customInput.required = false;
+        customInput.removeAttribute('name');
+        select.setAttribute('name', 'subject');
+      }
+    }
+  </script>
 
   <label>Raum:</label><br>
   <input type="text" name="room" required><br><br>

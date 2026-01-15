@@ -6,7 +6,44 @@
 <form method="post">
 
   <label>Fach:</label><br>
-  <input type="text" name="subject" value="{{ fach.fachname }}" required><br><br>
+  <select id="subjectSelect" name="subject" required onchange="toggleCustomInput()">
+    <option value="">-- Fach auswählen --</option>
+    <option value="Mathematik" {% if fach.fachname == 'Mathematik' %}selected{% endif %}>Mathematik</option>
+    <option value="Deutsch" {% if fach.fachname == 'Deutsch' %}selected{% endif %}>Deutsch</option>
+    <option value="Englisch" {% if fach.fachname == 'Englisch' %}selected{% endif %}>Englisch</option>
+    <option value="Französisch" {% if fach.fachname == 'Französisch' %}selected{% endif %}>Französisch</option>
+    <option value="Geschichte" {% if fach.fachname == 'Geschichte' %}selected{% endif %}>Geschichte</option>
+    <option value="Geografie" {% if fach.fachname == 'Geografie' %}selected{% endif %}>Geografie</option>
+    <option value="Biologie" {% if fach.fachname == 'Biologie' %}selected{% endif %}>Biologie</option>
+    <option value="Chemie" {% if fach.fachname == 'Chemie' %}selected{% endif %}>Chemie</option>
+    <option value="Physik" {% if fach.fachname == 'Physik' %}selected{% endif %}>Physik</option>
+    <option value="Informatik" {% if fach.fachname == 'Informatik' %}selected{% endif %}>Informatik</option>
+    <option value="Wirtschaft & Recht" {% if fach.fachname == 'Wirtschaft & Recht' %}selected{% endif %}>Wirtschaft & Recht</option>
+    <option value="Musik" {% if fach.fachname == 'Musik' %}selected{% endif %}>Musik</option>
+    <option value="Bildnerisches Gestalten" {% if fach.fachname == 'Bildnerisches Gestalten' %}selected{% endif %}>Bildnerisches Gestalten</option>
+    <option value="Sport" {% if fach.fachname == 'Sport' %}selected{% endif %}>Sport</option>
+    <option value="custom" {% if fach.fachname not in ['Mathematik', 'Deutsch', 'Englisch', 'Französisch', 'Geschichte', 'Geografie', 'Biologie', 'Chemie', 'Physik', 'Informatik', 'Wirtschaft & Recht', 'Musik', 'Bildnerisches Gestalten', 'Sport'] %}selected{% endif %}>Anderes (Ergänzungsfach)</option>
+  </select><br>
+  <input type="text" id="customSubject" name="custom_subject" value="{% if fach.fachname not in ['Mathematik', 'Deutsch', 'Englisch', 'Französisch', 'Geschichte', 'Geografie', 'Biologie', 'Chemie', 'Physik', 'Informatik', 'Wirtschaft & Recht', 'Musik', 'Bildnerisches Gestalten', 'Sport'] %}{{ fach.fachname }}{% endif %}" placeholder="Eigenes Fach eingeben" style="{% if fach.fachname not in ['Mathematik', 'Deutsch', 'Englisch', 'Französisch', 'Geschichte', 'Geografie', 'Biologie', 'Chemie', 'Physik', 'Informatik', 'Wirtschaft & Recht', 'Musik', 'Bildnerisches Gestalten', 'Sport'] %}display:block;{% else %}display:none;{% endif %} margin-top: 10px;"><br><br>
+  
+  <script>
+    function toggleCustomInput() {
+      const select = document.getElementById('subjectSelect');
+      const customInput = document.getElementById('customSubject');
+      
+      if (select.value === 'custom') {
+        customInput.style.display = 'block';
+        customInput.required = true;
+        select.removeAttribute('name');
+        customInput.setAttribute('name', 'subject');
+      } else {
+        customInput.style.display = 'none';
+        customInput.required = false;
+        customInput.removeAttribute('name');
+        select.setAttribute('name', 'subject');
+      }
+    }
+  </script>
 
   <label>Raum:</label><br>
   <input type="text" name="room" value="{{ fach.raumnummer }}" required><br><br>
