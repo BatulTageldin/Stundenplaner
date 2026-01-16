@@ -1,13 +1,11 @@
+-- Complete Database Schema
 
--- Tabelle für Schüler
-CREATE TABLE schueler (
+-- Tabelle für Users (authentication)
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    klasse VARCHAR(50),
-   
-
-
-
+    username VARCHAR(250) NOT NULL UNIQUE,
+    password VARCHAR(250) NOT NULL,
+    role VARCHAR(20) NOT NULL
 );
 
 -- Tabelle für Lehrer
@@ -22,8 +20,7 @@ CREATE TABLE lehrer (
 -- Tabelle für Räume
 CREATE TABLE raum (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    raumnummer VARCHAR(50) NOT NULL,
-    kapazitaet INT
+    raumnummer VARCHAR(50) NOT NULL
 );
 
 -- Tabelle für Fächer
@@ -39,7 +36,7 @@ CREATE TABLE faecher (
     FOREIGN KEY (raum_id) REFERENCES raum(id)
 );
 
--- Tabelle für Stundenplan
+-- Tabelle für Stundenplan (student enrollment)
 CREATE TABLE stundenplan (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -48,15 +45,7 @@ CREATE TABLE stundenplan (
     FOREIGN KEY (fach_id) REFERENCES faecher(id)
 );
 
-
-CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(250) NOT NULL UNIQUE,
-    password VARCHAR(250) NOT NULL,
-    role VARCHAR(20) NOT NULL
-);
-
--- Tabelle für Fach-Gewichtungen (Pluspunkte)
+-- Tabelle für Fach-Gewichtungen (Pluspunkte calculator)
 CREATE TABLE fach_gewichtungen (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -66,7 +55,7 @@ CREATE TABLE fach_gewichtungen (
     UNIQUE KEY unique_user_fach (user_id, fachname)
 );
 
--- Tabelle für Prüfungen (Pluspunkte)
+-- Tabelle für Prüfungen (Pluspunkte calculator)
 CREATE TABLE pruefungen (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,

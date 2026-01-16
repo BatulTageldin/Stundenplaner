@@ -1,22 +1,18 @@
 from flask import Flask, redirect, render_template, request, url_for
 from dotenv import load_dotenv
 import os
-import git
-import hmac
-import hashlib
 from db import db_read, db_write
 from auth import login_manager, authenticate, register_user
 from flask_login import login_user, logout_user, login_required, current_user
 import logging
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 
 # Load .env variables
 load_dotenv()
-W_SECRET = os.getenv("W_SECRET")
 
 # Init flask app
 app = Flask(__name__)
@@ -26,25 +22,6 @@ app.secret_key = "supersecret"
 # Init auth
 login_manager.init_app(app)
 login_manager.login_view = "login"
-
-# DON'T CHANGE
-def is_valid_signature(x_hub_signature, data, private_key):
-    hash_algorithm, github_signature = x_hub_signature.split('=', 1)
-    algorithm = hashlib.__dict__.get(hash_algorithm)
-    encoded_key = bytes(private_key, 'latin-1')
-    mac = hmac.new(encoded_key, msg=data, digestmod=algorithm)
-    return hmac.compare_digest(mac.hexdigest(), github_signature)
-
-# DON'T CHANGE
-@app.post('/update_server')
-def webhook():
-    x_hub_signature = request.headers.get('X-Hub-Signature')
-    if is_valid_signature(x_hub_signature, request.data, W_SECRET):
-        repo = git.Repo('./mysite')
-        origin = repo.remotes.origin
-        origin.pull()
-        return 'Updated PythonAnywhere successfully', 200
-    return 'Unauthorized', 401
 
 
 # -----------------------------
@@ -631,7 +608,6 @@ def pluspunkte():
 @login_required
 def save_pluspunkte():
     if current_user.role != 'student':
-        print("ERROR: User is not a student")
         return {'success': False, 'error': 'Unauthorized'}, 403
     
     try:
@@ -642,12 +618,6 @@ def save_pluspunkte():
         fach_gewichtung = data.get('fach_gewichtung', 1.0)
         pruefungen = data.get('pruefungen', [])
         
-        print(f"\n=== SAVE PLUSPUNKTE DEBUG ===")
-        print(f"User ID: {current_user.id}")
-        print(f"Fachname: {fachname}")
-        print(f"Fach-Gewichtung: {fach_gewichtung}")
-        print(f"Prüfungen: {pruefungen}")
-        
         # Save or update Fach-Gewichtung
         existing = db_read(
             "SELECT id FROM fach_gewichtungen WHERE user_id=%s AND fachname=%s",
@@ -656,37 +626,28 @@ def save_pluspunkte():
         )
         
         if existing:
-            print(f"Updating existing fach_gewichtung ID: {existing['id']}")
             db_write(
                 "UPDATE fach_gewichtungen SET gewichtung=%s WHERE id=%s",
                 (fach_gewichtung, existing['id'])
             )
         else:
-            print("Inserting new fach_gewichtung")
             db_write(
                 "INSERT INTO fach_gewichtungen (user_id, fachname, gewichtung) VALUES (%s, %s, %s)",
                 (current_user.id, fachname, fach_gewichtung)
             )
         
         # Delete old Prüfungen for this subject
-        print(f"Deleting old pruefungen for {fachname}")
         db_write("DELETE FROM pruefungen WHERE user_id=%s AND fachname=%s", (current_user.id, fachname))
         
         # Insert new Prüfungen
-        print(f"Inserting {len(pruefungen)} new pruefungen")
-        for i, pruefung in enumerate(pruefungen):
-            print(f"  Prüfung {i+1}: Note={pruefung['note']}, Gewichtung={pruefung['gewichtung']}")
+        for pruefung in pruefungen:
             db_write(
                 "INSERT INTO pruefungen (user_id, fachname, note, gewichtung) VALUES (%s, %s, %s, %s)",
                 (current_user.id, fachname, pruefung['note'], pruefung['gewichtung'])
             )
         
-        print("Save successful!")
         return {'success': True}
     except Exception as e:
-        print(f"ERROR saving pluspunkte: {e}")
-        import traceback
-        print(traceback.format_exc())
         logging.error(f"Error saving pluspunkte: {e}")
         return {'success': False, 'error': str(e)}, 500
 
@@ -722,14 +683,7 @@ def add_todo():
     title = request.form.get("title", "").strip()
     due_date = request.form.get("due_date", None)
     
-    print(f"\n=== ADD TODO DEBUG ===")
-    print(f"User ID: {current_user.id}")
-    print(f"Title: {title}")
-    print(f"Due date (raw): {request.form.get('due_date')}")
-    print(f"Due date (processed): {due_date}")
-    
     if not title:
-        print("ERROR: No title provided")
         return redirect(url_for("todos"))
     
     # Convert empty string to None for SQL
@@ -737,16 +691,11 @@ def add_todo():
         due_date = None
     
     try:
-        print(f"Attempting INSERT with user_id={current_user.id}, title='{title}', due_date={due_date}")
         db_write(
             "INSERT INTO todos (user_id, title, due_date) VALUES (%s, %s, %s)",
             (current_user.id, title, due_date)
         )
-        print("INSERT successful!")
     except Exception as e:
-        print(f"ERROR in db_write: {e}")
-        import traceback
-        print(traceback.format_exc())
         logging.error(f"Error adding todo: {e}")
     
     return redirect(url_for("todos"))

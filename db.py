@@ -24,15 +24,9 @@ def db_read(sql, params=None, single=False):
         cur.execute(sql, params or ())
 
         if single:
-            # liefert EIN Dict oder None
-            row = cur.fetchone()
-            print("db_read(single=True) ->", row)   # DEBUG
-            return row
+            return cur.fetchone()
         else:
-            # liefert Liste von Dicts (evtl. [])
-            rows = cur.fetchall()
-            print("db_read(single=False) ->", rows)  # DEBUG
-            return rows
+            return cur.fetchall()
 
     finally:
         try:
@@ -48,7 +42,6 @@ def db_write(sql, params=None, return_id=False):
         cur = conn.cursor()
         cur.execute(sql, params or ())
         conn.commit()
-        print("db_write OK:", sql, params)  # DEBUG
         if return_id:
             return cur.lastrowid
     finally:

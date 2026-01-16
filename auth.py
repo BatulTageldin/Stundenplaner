@@ -18,70 +18,51 @@ class User(UserMixin):
 
     @staticmethod
     def get_by_id(user_id):
-        logger.debug("User.get_by_id() aufgerufen mit user_id=%s", user_id)
         try:
             row = db_read(
                 "SELECT * FROM users WHERE id = %s",
                 (user_id,),
                 single=True
             )
-            logger.debug("User.get_by_id() DB-Ergebnis: %r", row)
         except Exception:
-            logger.exception("Fehler bei User.get_by_id(%s)", user_id)
+            logger.exception("Error fetching user by id=%s", user_id)
             return None
 
         if row:
             return User(row["id"], row["username"], row["password"], row["role"])
-        else:
-            logger.warning("User.get_by_id(): kein User mit id=%s gefunden", user_id)
-            return None
+        return None
 
     @staticmethod
     def get_by_username(username):
-        logger.debug("User.get_by_username() aufgerufen mit username=%s", username)
         try:
             row = db_read(
                 "SELECT * FROM users WHERE username = %s",
                 (username,),
                 single=True
             )
-            logger.debug("User.get_by_username() DB-Ergebnis: %r", row)
         except Exception:
-            logger.exception("Fehler bei User.get_by_username(%s)", username)
+            logger.exception("Error fetching user by username=%s", username)
             return None
 
         if row:
             return User(row["id"], row["username"], row["password"], row["role"])
-        else:
-            logger.info("User.get_by_username(): kein User mit username=%s", username)
-            return None
+        return None
 
 
 # Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
-    logger.debug("load_user() aufgerufen mit user_id=%s", user_id)
     try:
-        user = User.get_by_id(int(user_id))
+        return User.get_by_id(int(user_id))
     except ValueError:
-        logger.error("load_user(): user_id=%r ist keine int", user_id)
+        logger.error("Invalid user_id format: %r", user_id)
         return None
-
-    if user:
-        logger.debug("load_user(): User gefunden: %s (id=%s)", user.username, user.id)
-    else:
-        logger.warning("load_user(): kein User für id=%s gefunden", user_id)
-
-    return user
 
 
 # Helpers
 def register_user(username, password, role):
-    logger.info("register_user(): versuche neuen User '%s' anzulegen", username)
-
     existing = User.get_by_username(username)
     if existing:
-        logger.warning("register_user(): Username '%s' existiert bereits", username)
         return False
 
     hashed = generate_password_hash(password)
@@ -91,25 +72,22 @@ def register_user(username, password, role):
             (username, hashed, role),
             return_id=True
         )
-        logger.info("register_user(): User '%s' erfolgreich angelegt", username)
+        logger.info("User registered: %s", username)
     except Exception:
-        logger.exception("Fehler beim Anlegen von User '%s'", username)
+        logger.exception("Error registering user: %s", username)
         return False
 
     return user_id
 
 
 def authenticate(username, password):
-    logger.info("authenticate(): Login-Versuch für '%s'", username)
     user = User.get_by_username(username)
 
     if not user:
-        logger.warning("authenticate(): kein User mit username='%s' gefunden", username)
         return None
 
     if check_password_hash(user.password, password):
-        logger.info("authenticate(): Passwort korrekt für '%s'", username)
+        logger.info("User logged in: %s", username)
         return user
 
-    logger.warning("authenticate(): falsches Passwort für '%s'", username)
     return None
